@@ -1,0 +1,55 @@
+* Key
+
+X = Done
+
+* Improvements
+
+- Better handling of errors caught durring testing
+  - Include "Error caught: $@" in output.
+
+X Combinators
+  X Size
+  - Each -- Impl: List of length 1 w/ multiple generators
+  - Apply(f,gs...) -- returns f(@{Each(gs)})
+  - Concat(gs) = Apply(map {@$_ $_}, @{Each(gs)})
+  - Flatten(gs)
+
+- Test apparatus
+  X label & friends
+  X output & reporting
+  X integrate w/ Test::Harness
+  - Seed for repeatable tests
+
+- Docs
+
+* CPAN submission
+
+X Module list short description: "automatic, specification-based
+  testing tool"
+
+X Rename for better harmony with the global Perl namespace:
+  LectroTest.pm --> Poof! (?)
+  LectroTest::Simple     -> Test::LectroTest (::Simple ?)
+  LectroTest::Test       -> Test::LectroTest::Property
+  LectroTest::TestRunner -> Test::LectroTest::TestRunner
+  LectroTest::Generator  -> Test::LectroTest::Generator
+
+- Docs review
+
+- Make sure LectroTest URL is in all docs
+
+- Set version to something sensible
+
+* Todo
+
+X Replace Char's range=>[] w/ charset=>"".
+
+X Test case $t
+    return $t->redo; # if random vars don't satisfy test preconditions
+    $t->label("zero") if $x == 0;
+    $t->trivial       if $x == 0 && $y == 0;
+
+
+Local variables:
+mode: outline
+End:

@@ -1,0 +1,28 @@
+-*-Outline-*-
+
+LectroTest Change Log
+Tom Moertel (tom@moertel.com)
+
+* 20_02  Minor fixes
+
+- Added README (d'oh!)
+
+* 20_01  First Pre-CPAN upload release (2004-08-09)
+
+- Major documentation improvements
+
+- Lots of cleanups
+
+- Reorg under Test:
+  LectroTest::*      -> Test::LectroTest::*
+  LectroTest::Simple -> Test::LectroTest
+
+* 10_02  First public release (2004-08-08)
+
+- Clean ups
+
+* 10_01  First cut
+
+
+* Everything below is for Emacs (please ignore)
+
