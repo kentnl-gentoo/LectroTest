@@ -1,17 +1,23 @@
 --- #YAML:1.0
 name: Test-LectroTest
-version: 0.2008
+version: 0.201
 author:
   - Tom Moertel (tom@moertel.com)
 abstract: Easy, automatic, specification-based tests
 license: perl
 requires:
+  Carp: 0
+  Class::Struct: 0
+  Data::Dumper: 0
   Filter::Util::Call: 0
+  Test::Builder: 0
   Test::More: 0
 provides:
   Test::LectroTest:
     file: lib/Test/LectroTest.pm
-    version: 0.2008
+    version: 0.201
+  Test::LectroTest::Compat:
+    file: lib/Test/LectroTest/Compat.pm
   Test::LectroTest::Generator:
     file: lib/Test/LectroTest/Generator.pm
     version: 0.13

@@ -8,7 +8,7 @@ use Filter::Util::Call;
 require Test::LectroTest::Property;
 require Test::LectroTest::Generator;
 
-our $VERSION = 0.20_08;
+our $VERSION = 0.20_10;
 
 =head1 NAME 
 
@@ -35,7 +35,7 @@ Test::LectroTest - Easy, automatic, specification-based tests
 This module provides a simple (yet full featured) interface to
 LectroTest, an automated, specification-based testing system for Perl.
 To use it, you declare properties that specify the expected behavior
-of your software.  LectroTest then checks your software see whether
+of your software.  LectroTest then checks your software to see whether
 those properties hold.
 
 You declare properties using the C<Property> function, which takes a
@@ -204,7 +204,7 @@ http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright (c) 2004 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004-05 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

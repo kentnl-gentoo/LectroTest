@@ -3,7 +3,6 @@
 use strict;
 use Test::More tests => 220;
 use Data::Dumper;
-use List::Util qw( max );
 
 BEGIN { use_ok( 'Test::LectroTest::Generator', qw(:common :combinators) ) }
 
@@ -83,6 +82,14 @@ sub clipped_triangle_mean($$$) {
     my $bot   = max($m,$s);
     my $mfrac = max(($m-$s)/($n-$s+1),0);
     return $m + (1-$mfrac) * (($bot-$m)/2+($n-$bot)/4);
+}
+
+sub max {
+    my $max;
+    foreach (@_) {
+        $max = $_ if !defined($max) || $_ > $max;
+    }
+    $max;
 }
 
 

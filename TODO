@@ -9,7 +9,11 @@ X = Done
 
 * Improvements
 
-- Make Paste combinator accept List arguments (via concat).
+- Let each property optionally specify how many times it is
+  to be tested:  Property { ... } name => ..., trials => 100;
+
+
+X Make Paste combinator accept List arguments (via concat).
 
 X Multiple generator-bindings per Property to allow for
   focusing on certain subpaces of the haystack:

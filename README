@@ -20,7 +20,7 @@ DESCRIPTION
     This module provides a simple (yet full featured) interface to
     LectroTest, an automated, specification-based testing system for Perl.
     To use it, you declare properties that specify the expected behavior of
-    your software. LectroTest then checks your software see whether those
+    your software. LectroTest then checks your software to see whether those
     properties hold.
 
     You declare properties using the "Property" function, which takes a
@@ -143,7 +143,7 @@ INSPIRATION
     http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 COPYRIGHT and LICENSE
-    Copyright (c) 2004 by Thomas G Moertel. All rights reserved.
+    Copyright (c) 2004-05 by Thomas G Moertel. All rights reserved.
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.

@@ -124,8 +124,11 @@ using accessors of the same name.  For example:
 
 =cut
 
-sub new { my $self = shift; my $class = ref($self) || $self; return
-    bless { %defaults, @_ }, $class; }
+sub new { 
+    my $self = shift;
+    my $class = ref($self) || $self;
+    return bless { %defaults, @_ }, $class; 
+}
 
 =pod
 
@@ -601,7 +604,7 @@ http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright (c) 2004 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004-05 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

@@ -4,11 +4,37 @@ LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
 
+* 0.20_10   (2004-02-16)
+
+** Improvements
+
+- Now you can mix LectroTest and Test::* modules!
+  Test::LectroTest::Compat provides the compatibility magic.
+
+** Fixes
+
+- Updated copyright notices.
+
+- Removed use of List::Util from t/001.t.  (This should be
+  the list use of the module.  Now we can cut the dependency.)
+
+- Renamed the test .t files to something sensible.
+
+** Misc
+
+- Made list of dependencies in Build.PL pedantically complete.
+
+
+
 * 0.20_08   (2005-02-05)
 
 ** Improvements
 
-- Paste can now be used to join elements of generated lists.
+- Paste can now be used to join elements of generated lists,
+  which are "flattened" before pasting.  For example, the
+  following are equivalent:
+      Paste( (Bool) x 4 )
+      Paste( List(Bool, length=>4) )
 
 - Removed dependency upon Data::Dumper's Sortkeys method and
   upon List::Util entirely.  This makes LectroTest compatible with
@@ -101,7 +127,7 @@ Tom Moertel (tom@moertel.com)
   end of load.
 
 
-* 0.20_03  Bugfix and doc improvements (2004-09-11)
+* 0.20_03  Bug fix and doc improvements (2004-09-11)
 
 ** Fixes
 

@@ -125,7 +125,7 @@ my $pkg = __PACKAGE__;
 sub new {
     my $self   = shift;
     my $class  = ref($self) || $self;
-    croak "$pkg: invalid list of named parameters"
+    croak "$pkg: invalid list of named parameters: (@_)"
         if @_ % 2;
     my %args  = @_;
     croak "$pkg: test subroutine must be provided"
@@ -456,7 +456,7 @@ http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright (c) 2004 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004-05 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
