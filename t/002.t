@@ -2,7 +2,7 @@
 
 # use MyModule;  # provides my_function_to_test
 
-use Test::LectroTest scalefn => sub { $_[0] / 2 + 3 }, verbose => 1, debug => 1;
+use Test::LectroTest trials => 10;
 
 my $intgen = Int;
 

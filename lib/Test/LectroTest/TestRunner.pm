@@ -17,7 +17,7 @@ Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for 
  use Test::LectroTest::TestRunner;
 
  my @args = trials => 1_000, retries => 20_000;
- my $runner = Test::LectroTest::TestRunner->new(@args);
+ my $runner = Test::LectroTest::TestRunner->new( @args );
 
  # test a single property and print details upon failure
  my $result = $runner->run( $a_single_lectrotest_property );
@@ -29,9 +29,17 @@ Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for 
 
 =head1 DESCRIPTION
 
-For now, look at L<LectroTest::Property/SYNOPSIS> for
-a common manual usage of TestRunner.
+B<STOP!> If you just want to write and run simple tests, see
+Test::LectroTest.
 
+This module provides Test::LectroTest::TestRunner, a class of objects
+that test properties by running repeated random trials.  You create
+a TestRunner, configure it, and then call its C<run> or C<run_suite>
+methods to test properties individually or in groups.
+
+=head2 METHODS
+
+The following methods are available.
 
 =cut
 
@@ -53,12 +61,93 @@ for my $field (keys %defaults) {
     };
 }
 
-sub new {
-    my $self   = shift;
-    my $class  = ref($self) || $self;
-    return bless { %defaults, @_ }, $class;
-}
 
+=pod
+
+=over 4
+
+=item new
+
+  my $runner = new Test::LectroTest::TestRunner(
+    trials  => 1_000,
+    retries => 20_000,
+    scalefn => sub { $_[0] / 2 + 1 },
+    verbose => 1
+  );
+
+Creates a new Test::LectroTest::TestRunner and configures it with the
+given named parameters, if any.  Typically, you need only provide the
+C<trials> parameter because the other values are reasonable for almost
+all situations.  Here is what each parameter means:
+
+=over 4
+
+=item trials
+
+The number of trials to run against each property checked.
+The default is 1_000.
+
+=item retries
+
+The number of times to allow a property to retry trials (via
+C<$tcon->retry>) during the entire property check before aborting the
+check.  This is used primary to prevent infinite looping, should
+the property retry every attempt.
+
+=item scalefn
+
+A subroutine that scales the sizing guidance given by the TestRunner
+to the input generators.
+
+The TestRunner starts with an initial guidance of 1 at the beginning
+of a property check.  For each trial (or retry) of the property, the
+guidance value is incremented.  This causes successive trials to be
+tried using successively larger inputs.  The C<scalefn> subroutine
+gets to adjust this guidance on the way to the input generators.
+Typically, you would change the C<scalefn> subroutine if you wanted to
+change the rate and which inputs grow during the course of the trials.
+
+=item verbose
+
+If true (the default) the TestRunner will use verbose output that
+includes things like label frequencies and counterexamples.  Otherwise,
+only one-line summaries will be output.  Unless you have a good
+reason to do otherwise, leave this parameter alone because verbose
+output is almost always what you want.
+
+=back
+
+You can also set and get the values of the configuration properties
+using accessors of the same name.
+
+=cut
+
+sub new { my $self = shift; my $class = ref($self) || $self; return
+    bless { %defaults, @_ }, $class; }
+
+=pod
+
+=item run
+
+  $results = $runner->run( $a_property );
+  print $results->summary, "\n";
+  if ($results->success) {
+      # celebrate!
+  }
+
+Checks whether the given property holds by running repeated random
+trials.  The result is a Test::LectroTest::TestRunner::results object,
+which you can query for fined-grained information about the outcome of
+the check.
+
+The C<run> method takes an optional second argument which gives
+the test number.  If it is not provided (usually the case), the
+next number available from the test runner's internal counter is
+used.
+
+  $results = $runner->run( $third_property, 3 );
+
+=cut
 
 sub run {
     local $" = " & ";
@@ -91,7 +180,7 @@ sub run {
         if ($controller->retried) {
             $retries++;
             if ($retries >= $self->retries) {
-                $results->add_notes("$retries retries exceeded");
+                $results->incomplete("$retries retries exceeded");
                 $results->attempts( $_ );
                 return $results;
             }
@@ -112,6 +201,32 @@ sub run {
     $results->labels( \%labels );
     return $results;
 }
+
+=pod
+
+=item run_suite
+
+  my $all_success = $runner->run_suite( @properties );
+  if ($all_success) {
+      # celebrate most jubilantly!
+  }
+
+Checks a suite of properties, sending the results of each
+property checked to STDOUT in a form that is compatible with
+Test::Harness.  For example:
+
+  1..5
+  ok 1 - Property->new disallows use of 'tcon' in bindings
+  ok 2 - magic Property syntax disallows use of 'tcon' in bindings
+  ok 3 - exceptions are caught and reported as failures
+  ok 4 - pre-flight check catches new w/ no args
+  ok 5 - pre-flight check catches unbalanced arguments list
+
+By default, labeling statistics and counterexamples (if any) are
+included in the output.  You may turn them off by passing
+C<verbose=E<gt>0> after all of the properties in the argument list.
+
+=cut
 
 sub run_suite {
     local $| = 1;
@@ -135,6 +250,120 @@ sub run_suite {
     return $success;
 }
 
+=pod
+
+=back
+
+=head2 Test::LectroTest::TestRunner::results
+
+  my $results = $runner->run( $a_property );
+  print "Property name: ", $results->name, ": ";
+  print $results->success ? "Winner!" : "Loser!";
+
+This is the object that you get back from C<run>.  It contains all of
+the information available about the outcome of the property check
+and provides the following methods:
+
+=over 4
+
+=item success
+
+Boolean value:  True if the property checked out successfully;
+false otherwise.
+
+=item summary
+
+Returns a one line summary of the property-check outcome.  It does not
+end with a newline.  Example:
+
+  ok 1 - Property->new disallows use of 'tcon' in bindings
+
+=item details
+
+Returns all relevant information about the property-check outcome as a
+series of lines.  The last line is terminated with a newline.  The
+details are identical to the summary (except for the terminating
+newline) unless label frequencies are present or a counterexample
+is present.  Example:
+
+  1..1
+  not ok 1 - 'my_sqrt meets defn of sqrt' falsified in 1 attempts
+  # Counterexample:
+  # $x = '0.546384454460178';
+
+=item name
+
+Returns the name of the property to which the results pertain.
+
+=item number
+
+The number assigned to the property that was checked.
+
+=item counterexample
+
+Returns the counterexample that "broke" the code being tested, if
+there is one.  Otherwise, returns an empty string.
+
+=item labels
+
+Label counts.  If any labels were applied, this value will be
+a reference to a hash mapping each combination of labels to the
+count of trials that had that particular combination.  Otherwise,
+it will be undefined.
+
+Note that each trial is counted only once -- for the I<most-specific>
+combination of labels that are applied to it.  For example, consider
+the following labeling logic:
+
+  Property {
+    ##[ x <- Int ]##
+    $tcon->label("negative") if $x < 0;
+    $tcon->label("odd")      if $x % 2;
+    1;
+  }, name => "negative/odd";
+
+For a particular trial, if I<x> was 2 (positive and even), the trial
+would receive no labels.  If I<x> was 3 (positive and odd), the trial
+would be labeled "odd".  If I<x> was -2 (negative and even), the trial
+would be labeled "negative".  If I<x> was -3 (negative and odd), the
+trial would be labeled "negative & odd".
+
+=item label_frequencies
+
+Returns a string containing a line-by-line accounting of labels
+applied during the series of trials:
+
+  print $results->label_frequencies;
+
+The corresponding output looks like this:
+
+  25% negative
+  25% negative & odd
+  25% odd
+
+If no labels were applied, an empty string is returned.  
+
+=item exception
+
+Returns the text of the exception that caused the test series to be
+aborted, if there is one.  Otherwise, returns an empty string.
+
+=item attempts
+
+Returns the count of trials performed.
+
+=item incomplete
+
+In the event that the series of trials was halted before it was
+completed (such as when the retry count was exhausted), this method will
+return the reason.  Otherwise, it returns an empty string.
+
+Note that a series of trials I<is> complete if a counterexample is found.
+
+=back
+
+=cut
+
 package Test::LectroTest::TestRunner::results;
 use Class::Struct;
 import Data::Dumper;
@@ -145,27 +374,21 @@ struct( name            => '$',
         counterexample_ => '$',
         exception       => '$',
         attempts        => '$',
-        notes           => '$',
+        incomplete      => '$',
         number          => '$',
 );
 
 sub summary {
     my $self = shift;
     my ($name, $attempts) = ($self->name, $self->attempts);
-    my $notes = $self->notes;
+    my $incomplete = $self->incomplete;
     my $number = $self->number || 1;
     local $" = " / ";
     return $self->success
         ? "ok $number - '$name' ($attempts attempts)"
-        : $notes ? "not ok $number - '$name' incomplete (@$notes)"
-                 : "not ok $number - '$name' falsified in $attempts attempts";
-}
-
-sub add_notes {
-    my $self = shift;
-    my $notes = $self->notes || [];
-    push @$notes, @_;
-    $self->notes( $notes );
+        : $incomplete
+            ? "not ok $number - '$name' incomplete ($incomplete)"
+            : "not ok $number - '$name' falsified in $attempts attempts";
 }
 
 sub details {
@@ -206,15 +429,63 @@ sub counterexample {
     return $dd->Dump;
 }
 
+=pod 
+
+=head2 Test::LectroTest::TestRunner::testcontroller
+
+During a live property-check trial, the variable C<$tcon> is
+available to your Properties.  It lets you label the current
+trial or request that it be re-tried with new inputs.
+
+The following methods are available.
+
+=cut
 
 package Test::LectroTest::TestRunner::testcontroller;
 import Class::Struct;
 
 struct ( labels => '$', retried => '$' );
 
+=pod
+
+=over 4
+
+=item retry
+
+    Property {
+      ##[ x <- Int ]##
+      return $tcon->retry if $x == 0; 
+    }, ... ;
+
+
+Stops the current trial and tells the test runner to re-try it
+with new inputs.  Typically used to reject a particular case
+of inputs that doesn't make for a good or valid test.
+
+=cut
+
 sub retry {
     shift->retried(1);
 }
+
+
+=pod
+
+=item label
+
+    Property {
+      ##[ x <- Int ]##
+      $tcon->label("negative") if $x < 0; 
+      $tcon->label("odd")      if $x % 2; 
+    }, ... ;
+
+Applies a label to the current trial.  At the end of the trial, all of
+the labels are gathered together, and the trial is dropped into a
+bucket bearing the combined label.  See the discussion of
+L</labels> for more.
+
+=cut
+
 
 sub label {
     my $self = shift;
@@ -223,9 +494,29 @@ sub label {
     $self->labels( $labels );
 }
 
+=pod
+
+=item trivial
+
+    Property {
+      ##[ x <- Int ]##
+      $tcon->trivial if $x == 0; 
+    }, ... ;
+
+Applies the label "trivial" to the current trial.  It is identical to
+calling C<label> with "trivial" as the argument.
+
+=cut 
+
 sub trivial {
     shift->label("trivial");
 }
+
+=pod
+
+=back
+
+=cut
 
 package Test::LectroTest::TestRunner;
 
@@ -233,13 +524,14 @@ package Test::LectroTest::TestRunner;
 
 
 
+
 =head1 LECTROTEST HOME
 
-The LectroTest home is
-L<http:E<sol>E<sol>community.moertel.comE<sol>LectroTest>.  There you
-will find more documentation, presentations, a wiki, and other helpful
-LectroTest-related resources.  It's also the best place to ask
-questions.
+The LectroTest home is 
+http://community.moertel.com/LectroTest.
+There you will find more documentation, presentations, a wiki,
+and other helpful LectroTest-related resources.  It's also the
+best place to ask questions.
 
 =head1 AUTHOR
 
@@ -249,11 +541,11 @@ Tom Moertel (tom@moertel.com)
 
 The LectroTest project was inspired by Haskell's fabulous
 QuickCheck module by Koen Claessen and John Hughes:
-L<http:E<sol>E<sol>www.cs.chalmers.seE<sol>~rjmhE<sol>QuickCheckE<sol>>.
+http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright 2004 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

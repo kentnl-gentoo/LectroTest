@@ -4,7 +4,13 @@ X = Done
 
 * Improvements
 
-- Better handling of errors caught durring testing
+- Multiple generator-bindings per Property to allow for
+  focusing on certain subpaces of the haystack:
+    ##[ [ x <- Int ], [ x <- Int(range=>[-1,1]) ]##
+  - all bindings must have identical sets of variables
+  - test runner runs a full set of trials against each binding
+
+X Better handling of errors caught durring testing
   - Include "Error caught: $@" in output.
 
 X Combinators
@@ -21,7 +27,9 @@ X Combinators
   - Seed for repeatable tests
 
 - Docs
-
+  - TestRunner
+  - Property
+  - Tutorial 
 - Repeatability
   - Emit the RNG seed at the outset of the tests for repeatability
   - Accept an option to use a given seed

@@ -11,8 +11,6 @@ BEGIN {
     use Exporter ();
     our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
-    $VERSION = 0.10;
-
     @ISA         = qw(Exporter);
     @EXPORT      = ();
     @EXPORT_OK   = qw(&Gen &Int &Bool &Char &String &List &Hash &Float
@@ -70,18 +68,19 @@ Test::LectroTest::Generator - Random value generators and combinators
 
 =head1 DESCRIPTION
 
-This module provides random value generators for common types and
-provides an interface and tools for creating your own generators.
-It also provides generator combinators that can be used to create
+This module provides random value generators for common data types and
+provides an interface and tools for creating your own generators.  It
+also provides generator combinators that can be used to create
 more-complex generators by combining simple ones.
 
 
 A generator is an object having a method C<generate>, which takes a
 single argument, I<size> and returns a new random value.  The
 generator interprets the I<size> argument as guidance about the
-largest value it should create.  Typically, smaller I<size> values
-result in smaller generated values.  Some generators ignore sizing
-guidance or can be told to ignore it via the B<sized> modifier.
+complexity of the value it should create.  Typically, smaller I<size>
+values result in smaller generated numbers and shorter generated
+strings and lists.  Some generators ignore sizing guidance or can be
+told to ignore it via the B<sized> modifier.
 
 =cut
 
@@ -137,6 +136,8 @@ sub Gen(&) {
     my ($genfn) = @_;
     return Test::LectroTest::Generator->new(generator=>$genfn);
 }
+
+=pod 
 
 =head2 GENERATORS
 
@@ -195,12 +196,14 @@ sub Int(@) {
     };
 }
 
+=pod
+
 =item Float
 
     my $gen = Float( range=>[-2.0,2.0], sized=>1 );
 
 Creates a generator for floating-point values, by default in the range
-[-32768,32768), but this can be changed via the optional B<range> modifier.
+[-32768.0,32768.0), but this can be changed via the optional B<range> modifier.
 By default Float generators are sized.
 
 =over 4
@@ -208,9 +211,9 @@ By default Float generators are sized.
 =item Float( range=>[I<low>, I<high>] )
 
 Causes the generated values to be constrained to the range [I<low>,
-I<high>).  By default, the range is [0, 1).  (Note that the I<high>
-value itself can never be generated, but values infinitesimally
-close to it can.)
+I<high>).  By default, the range is [-32768.0,32768.0).  (Note that
+the I<high> value itself can never be generated, but values
+infinitesimally close to it can.)
 
 =item Float( sized=>I<bool> )
 
@@ -245,6 +248,8 @@ sub Float(@) {
     };
 }
 
+=pod
+
 =item Bool
 
     my $gen = Bool;
@@ -257,6 +262,8 @@ The generator ignores sizing guidance.
 sub Bool(@) {
     return Int( @_, range=>[0,1], sized=>0 );
 }
+
+=pod
 
 =item Char
 
@@ -336,6 +343,8 @@ sub Char(@) {
     my $cset = defargs("Char", @_)->{charset};
     return Elements( @{ parse_charset($cset) } )
 }
+
+=pod
 
 =item List(I<elemgen>)
 
@@ -437,6 +446,8 @@ sub List(@) {
     }
 }
 
+=pod
+
 =item Hash(I<keygen>, I<valgen>)
 
     my $gen = Hash( String( charset=>"A-Z", length=>3 ),
@@ -471,6 +482,7 @@ sub Hash(@) {
     };
 }
 
+=pod
 
 =item String
 
@@ -510,6 +522,8 @@ sub String(@) {
     }
 }
 
+=pod
+
 =item Elements(I<e1>, I<e2>, ...)
 
     my $gen = Elements( "alpha", "beta", "gamma" );
@@ -530,6 +544,8 @@ sub Elements(@) {
     croak "Elements(e...) must be given at least one element" unless @_;
     return OneOf( map {Unit($_)} @_ );
 }
+
+=pod
 
 =item Unit(I<e>)
 
@@ -552,6 +568,7 @@ sub Unit($) {
 }
 
 
+=pod
 
 =back
 
@@ -587,6 +604,7 @@ sub Paste(@) {
     }
 }
 
+=pod
 
 =item OneOf(I<gens>...)
 
@@ -612,6 +630,7 @@ sub OneOf(@) {
     }
 }
 
+=pod
 
 =item Frequency([I<freq1>, I<gen1>], [I<freq2>, I<gen2>], ...)
 
@@ -658,6 +677,8 @@ sub Frequency(@) {
     }
 }
 
+=pod
+
 =item Sized(I<BLOCK>, I<gen>)
 
     my $gen = Sized { 2 * $_[0] + 3 } List(Int);
@@ -677,7 +698,38 @@ sub Sized(&$) {
     };
 }
 
+=pod
+
 =back
+
+=head2 ROLLING YOUR OWN GENERATORS
+
+You can create your own generators by creating any object that
+has a C<generate> method.  Your method should accept as its
+first argument sizing guidance I<size> and, if it makes sense,
+adjust the complexity of the values it generates accordingly.
+
+The easiest way to create a generator is by using the magic function
+C<Gen>.  It promotes a block of code into a generator.  For example,
+here's a home-brew generator for times in ctime(3) format that
+is built on top of an Int generator:
+
+  use Test::LectroTest::Generator qw( :common Gen );
+
+  my $time_gen = Int(range=>[0, 2_147_483_647], sized=>0);
+  my $ctime_gen = Gen {
+      scalar localtime $time_gen->generate( @_ );
+  };
+
+  print($ctime_gen->generate($_), "\n") for 1..5;
+  # Fri Jun  2 18:13:21 1978
+  # Thu Mar 28 00:55:51 1974
+  # Wed Mar 26 06:41:09 2025
+  # Sun Sep 11 15:39:44 2016
+  # Fri Dec 26 00:39:31 1975
+
+(Note: C<Gen> is not imported into your module's namespace by default.
+If you want to use it, you must ask for it by name.)
 
 =cut
 
@@ -733,7 +785,7 @@ sub Sized(&$) {
 For these examples we use C<Data::Dumper> to inspect the data
 structures we generate.  Also, we import not only the common generator
 constructors (like Int) but also the generic Gen constructor, which
-lets us build on-the-fly generators out of blocks.
+lets us build generators out of blocks on the fly.
 
     use Data::Dumper;
     use Test::LectroTest::Generator qw(:common Gen);
@@ -777,13 +829,14 @@ to set up the mutually recursive relationship.  This we encapsulate
 within a B<do> block for tidiness.
 
 
+
 =head1 LECTROTEST HOME
 
-The LectroTest home is
-L<http:E<sol>E<sol>community.moertel.comE<sol>LectroTest>.  There you
-will find more documentation, presentations, a wiki, and other helpful
-LectroTest-related resources.  It's also the best place to ask
-questions.
+The LectroTest home is 
+http://community.moertel.com/LectroTest.
+There you will find more documentation, presentations, a wiki,
+and other helpful LectroTest-related resources.  It's also the
+best place to ask questions.
 
 =head1 AUTHOR
 
@@ -793,11 +846,11 @@ Tom Moertel (tom@moertel.com)
 
 The LectroTest project was inspired by Haskell's fabulous
 QuickCheck module by Koen Claessen and John Hughes:
-L<http:E<sol>E<sol>www.cs.chalmers.seE<sol>~rjmhE<sol>QuickCheckE<sol>>.
+http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright 2004 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

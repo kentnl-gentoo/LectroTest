@@ -8,11 +8,12 @@ use Filter::Util::Call;
 
 use Test::LectroTest::Generator qw( :common :combinators );
 
+use constant NO_FILTER => 'NO_FILTER';
 my $debugQ = 0;  # set to 1 to emit source-filter results on STDERR
 
 =head1 NAME
 
-Test::LectroTest::Property - Specifications of the properties that your software must hold
+Test::LectroTest::Property - Specifications of properties that your software must hold
 
 =head1 SYNOPSIS
 
@@ -39,20 +40,20 @@ Test::LectroTest::Property - Specifications of the properties that your software
 =head1 DESCRIPTION
 
 B<STOP!>  If you're just looking for an easy way to write and run
-unit tests, see Test::LectroTest first.
+unit tests, see Test::LectroTest.
 
-This module allows you to define Properties that can be tested
-automatically by Test::LectroTest.  A Property defines a
-behavioral characteristic that the software you're testing
-must hold over a range of inputs.
+This module allows you to define Properties that can be checked
+automatically by Test::LectroTest.  A Property is a specification of
+your software's required behavior over a given set of conditions.  The
+set of conditions is given by a generator-binding specification. The
+required behavior is defined implicitly by a block of code that tests
+your software's observed behavior for a given set of generated
+conditions against the expected behavior and either accepts or rejects
+the observed behavior.
 
 This documentation serves as reference documentation for LectroTest
 Properties.  If you don't understand the basics of Properties yet,
-see L<LectroTest::Tutorial/OVERVIEW> before continuing.
-
-[TODO: flesh out.]
-
-
+see L<Test::LectroTest::Tutorial/OVERVIEW> before continuing.
 
 =cut
 
@@ -69,31 +70,246 @@ our @CARP_NOT = qw ( Test::LectroTest::TestRunner );
 
 my %defaults = ( name => 'Unnamed Test::LectroTest::Property' );
 
-sub all(&@) {
-    my $f = shift;
-    $_ || return 0 for map {$f->($_)} @_;
-    1;
+=pod
+
+=head2 Two ways to create Properties
+
+There are two ways to create a property:
+
+=over 4
+
+=item 1
+
+Use the C<Property> function to promote a block of code that contains
+both a generator-binding specification and a behavior test into a
+Test::LectroTest::Property object.  B<This is the preferred method.>
+Example:
+
+  my $prop1 = Property {
+      ##[ x <- Int ]##
+      thing_to_test($x) >= 0;
+  }, name => "thing_to_test is non-negative";
+
+
+=cut
+
+sub Property(&&@) {
+    my ($genspec_fn, $test_fn, @args) = @_;
+    return Test::LectroTest::Property->new(
+        inputs => $genspec_fn->(),
+        test   => $test_fn,
+        @args
+    );                            
 }
+
+=pod
+
+=item 2
+
+Use the C<new> method of Test::LectroTest::Property and provide
+it with the necessary ingredients via named parameters:
+
+  my $prop2 = Test::LectroTest::Property->new(
+      inputs => [ x => Int ],
+      test   => sub { my ($tcon,$x) = @_; thing_to_test($x) >= 0 },
+      name   => "thing_to_test is non-negative"
+  );
+
+=back
+
+=cut
+
+my $pkg = __PACKAGE__;
 
 sub new {
     my $self   = shift;
     my $class  = ref($self) || $self;
-    my $inputs = shift;
-    if ($inputs eq "inputs") { $inputs = shift; }
-    croak "Test::LectroTest::Property: invalid list of named parameters"
+    croak "$pkg: invalid list of named parameters"
         if @_ % 2;
-    croak "Test::LectroTest::Property: invalid generator-binding list"
-        if @$inputs % 2;
+    my %args = @_;
+    my $inputs = $args{inputs};
+    croak "$pkg: did not get list of valid input-generator bindings"
+        if ref($inputs) ne "ARRAY" || @$inputs % 2;
+    delete $args{inputs};
     $inputs = { @$inputs };
-    croak "cannot use reserved name 'tcon' in a generator binding"
+    croak "$pkg: cannot use reserved name 'tcon' in a generator binding"
         if grep { 'tcon' eq $_ } keys %$inputs;
-    return bless { %defaults, inputs => $inputs, @_ }, $class;
+    croak "$pkg: test subroutine must be provided"
+        if ref($args{test}) ne 'CODE';
+    return bless { %defaults, inputs => $inputs, %args }, $class;
 }
+
+
+=pod
+
+Both are equivalent, but the first is concise, easier to read, and
+lets LectroTest do some of the heavy lifting for you.  The second is
+probably better, however, if you are constructing property
+specifications programmatically.
+
+=head2 Generator-binding specification
+
+The generator-binding specification declares that certain variables
+are to be bound to certain kinds of random-value generators during
+the tests of your software's behavior.  The number and kind of
+generators define the "condition space" that is examined during
+property checks.
+
+If you use the C<Property> function to create your
+Test::LectroTest::Property objects, your generator-binding
+specification must come first in your code block, and you must use the
+following syntax:
+
+  ##[ var1 <- gen1, var2 <- gen2, ... ]##
+
+Comments are not allowed within the specification, but you may
+break it across multiple lines:
+
+  ##[ var1 <- gen1,
+      var2 <- gen2, ...
+  ]##
+
+or
+
+  ##[
+      var1 <- gen1,
+      var2 <- gen2, ...
+  ]##
+
+Further, for better integration with syntax-highlighting IDEs,
+the terminating C<]##> delimiter may be preceded with a hash
+symbol C<#> and optional whitespace to make it appear like
+a comment:
+
+  ##[
+      var1 <- gen1,
+      var2 <- gen2, ...
+  # ]##
+
+On the other hand, if you use C<Test::LectroTest::Property-E<gt>new()>
+to create your objects, the generator-binding specification takes the
+form of an array reference containing variable-generator pairs that is
+passed to C<new()> as a named parameter:
+
+  inputs => [ var1 => gen1, var2 => gen2, ... ]
+
+Normal Perl syntax applies.
+
+
+=head2 Behavior test
+
+The behavior test is a subroutine that accepts a test-controller
+object and a given set of input conditions, tests your software's
+observed behavior with respect to the input conditions against the
+required behavior, and returns true or false to indicate acceptance or
+rejection.  If you are using the C<Property>-function method to create
+your property objects, lexical variables are declared and loaded
+automatically per your input-generator specification, so you
+can just use them immediately:
+
+  my $prop = Property {
+    ##[ i <- Int, delta <- Float(range=>[0,1]) ]##
+    my $lo_val = my_thing_to_test($i);
+    my $hi_val = my_thing_to_test($i + $delta);
+    $lo_val == $hi_val;
+  }, name => "my_thing_to_test ignores fractions" ;
+
+On the other hand, if you are using
+C<Test::LectroTest::Property-E<gt>new()>, you must declare and
+initialize these variables manually from Perl's C<@_> variable I<in
+lexically increasing order> after receiving C<$tcon>, the test
+controller object.  (This inconvenience, by the way, is why the former
+method is preferred.)  The hard way:
+
+  my $prop = Test::LectroTest::Property->new(
+    inputs => [ i => Int, delta => Float(range=>[0,1]) ],
+    test => sub {
+        my ($tcon, $delta, $i) = @_;
+        my $lo_val = my_thing_to_test($i);
+        my $hi_val = my_thing_to_test($i + $delta);
+        $lo_val == $hi_val
+    },
+    name => "my_thing_to_test ignores fractions"
+  ) ;
+
+
+=head2 Control logic, retries, and labeling
+
+Inside the behavior test, you have access to a special variable
+C<$tcon> that allows you to interact with the test controller.
+Through C<$tcon> you can do the following:
+
+=over 4 
+
+=item *
+
+retry the current trial with different inputs (if you don't like the
+inputs you were given at first)
+
+=item *
+
+add a label to the current trial for reporting purposes
+
+=back
+
+For example, let's say that we have written a function C<my_sqrt> that
+returns the square root of its input.  In order to check whether our
+implementation fulfills the mathematical definition of square root, we
+might specify the following property:
+
+  my $epsilon = 0.000_001;
+
+  Property {
+      ##[ x <- Float ]##
+      return $tcon->retry if $x < 0;
+      $tcon->label("less than one") if $x < 1;
+      my $sx = my_sqrt( $x );
+      abs($sx * $sx - $x) < $epsilon;
+  }, name => "my_sqrt satisfies defn of square root";
+
+Because we don't want to deal with imaginary numbers, our square-root
+function is defined only over non-negative numbers.  To make sure
+we don't accidentally check our property "at" a negative number, we
+use the following line to re-start the trial with a different
+input should the input we are given at first be negative:
+
+      return $tcon->retry if $x < 0;
+
+An interesting fact is that for all values I<x> between zero and one,
+the square root of I<x> is larger than I<x> itself.  Perhaps our
+implementation treats such values as a special case.  In order to be
+confident that we are checking this case, we added the following line:
+
+      $tcon->label("less than one") if $x < 1;
+
+In the property-check output, we can see what percentage of the
+trials checked this case:
+
+  1..1
+  ok 1 - 'my_sqrt satisfies defn of square root' (1000 attempts)
+  #   1% less than one
+
+=head1 Trivial cases
+
+Random-input generators may create some inputs that are trivial and
+don't provide much testing value.  To make it easy to label such
+cases, you can use the following from within your behavior tests:
+
+    $tcon->trivial if ... ;
+
+The above is exactly equivalent to the following:
+
+    $tcon->label("trivial") if ... ;
+
+
+
+
+=cut
 
 sub import {
     Test::LectroTest::Property->export_to_level(
-        1, grep {$_ ne "NO_FILTER"} @_ );
-    return if grep { $_ eq "NO_FILTER" } @_;
+        1, grep {$_ ne NO_FILTER} @_ );
+    return if grep {$_ eq NO_FILTER} @_;
     filter_add( make_code_filter() );
 }
 
@@ -141,23 +357,22 @@ sub body {
     ' sub { my (' . join(',', map {"\$$_"} 'tcon', @vars) . ') = @_;';
 }
 
-sub Property(&&@) {
-    my ($genspec_fn, $test_fn, @args) = @_;
-    return Test::LectroTest::Property->new(
-        inputs => $genspec_fn->(),
-        test   => $test_fn,
-        @args
-    );                            
-}
-
 1;
 
+=pod
 
+=head1 CAVEAT
+
+The special syntax used to specify generator bindings relies upon a
+source filter (see Filter::Util::Call).  If you don't want to use the
+syntax, you can disable the filter like so:
+
+    use Test::LectroTest::Property qw( NO_FILTER );
 
 =head1 LECTROTEST HOME
 
 The LectroTest home is 
-L<http:E<sol>E<sol>community.moertel.comE<sol>LectroTest>.
+http://community.moertel.com/LectroTest.
 There you will find more documentation, presentations, a wiki,
 and other helpful LectroTest-related resources.  It's also the
 best place to ask questions.
@@ -170,11 +385,11 @@ Tom Moertel (tom@moertel.com)
 
 The LectroTest project was inspired by Haskell's fabulous
 QuickCheck module by Koen Claessen and John Hughes:
-L<http:E<sol>E<sol>www.cs.chalmers.seE<sol>~rjmhE<sol>QuickCheckE<sol>>.
+http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright 2004 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

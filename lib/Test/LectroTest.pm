@@ -8,7 +8,7 @@ use Filter::Util::Call;
 require Test::LectroTest::Property;
 require Test::LectroTest::Generator;
 
-our $VERSION = .20_03;
+our $VERSION = 0.20_04;
 
 =head1 NAME 
 
@@ -38,8 +38,8 @@ To use it, you declare properties that specify the expected behavior
 of your software.  LectroTest then checks your software see whether
 those properties hold.
 
-You declare properties using the Property function, which takes a
-block and promotes it to a LectroTest::Property:
+You declare properties using the C<Property> function, which takes a
+block of code and promotes it to a Test::LectroTest::Property:
 
     Property {
         ##[ x <- Int, y <- Int ]##
@@ -53,7 +53,7 @@ declaration.  For example:
 
 (Note the special bracketing, which is required.)  This particular
 binding says, "For all integers I<x> and I<y>."  (See
-LectroTest::Generator for the passel of generators that
+Test::LectroTest::Generator for the passel of generators that
 are at your disposal.)
 
 The second part of the block is simply a snippet of code that makes
@@ -86,14 +86,13 @@ To check whether this property holds, simply put it in a Perl program
 that uses the Test::LectroTest module.  (See the L</SYNOPSIS> for an
 example.)  When you run the program, LectroTest will load the property
 (and any others in the file) and check it by running random trials
-against the software you're testing.  (Note: A Property specification
-must appear in the first column, without any indentation, in order for
-it to be automatically loaded and checked.)
+against the software you're testing.
 
-If LectroTest "breaks" your software during the property check, it
-will emit a counterexample and stop.  You can plug the counterexample
-back into your software to debug the problem.  (You might also want to
-add the counterexample to a list of regression tests.)
+If LectroTest is able to "break" your software during the property
+check, it will emit a counterexample to your property's assertions and
+stop.  You can plug the counterexample back into your software to
+debug the problem.  (You might also want to add the counterexample to
+a list of regression tests.)
 
 A successful LectroTest looks like this:
 
@@ -119,16 +118,23 @@ C<trials=E<gt>>I<N> flag:
   use Test::LectroTest trials => 10_000;
 
 
+=head1 CAVEATS
+
+A Property specification must appear in the first column, i.e.,
+without any indentation, in order for it to be automatically loaded
+and checked.  If this poses a problem, let me know, and this
+restriction can be lifted.
+
 =head1 SEE ALSO
 
 For a more in-depth introduction to LectroTest, see
-LectroTest::Tutorial.  For more information on the various parts of
-LectroTest, see LectroTest::Property, LectroTest::Generator, and
-LectroTest::TestRunner.
+Test::LectroTest::Tutorial.  For more information on the various parts
+of LectroTest, see Test::LectroTest::Property,
+Test::LectroTest::Generator, and Test::LectroTest::TestRunner.
 
 Also, the slides from my LectroTest talk for the Pittsburgh Perl
-Mongers is a great introduction.  Download a copy from the LectroTest
-home (see below).
+Mongers make for a great introduction.  Download a copy from the
+LectroTest home (see below).
 
 
 =cut
@@ -148,7 +154,6 @@ sub import {
     my $subfilter = Test::LectroTest::Property::make_code_filter();
     filter_add( sub {
         my $status = filter_read();
-        $_ .= 'END{Test::LectroTest::run()} ' unless $lines++;
         s{^(?=Test|Property)\b}{push \@Test::LectroTest::props, };
         $subfilter->( $status );
     });
@@ -158,17 +163,20 @@ sub run {
     $r->run_suite( @props, @opts ) if @props;
 }
 
+END { Test::LectroTest::run() }
+
 1;
 
 __END__
 
+
 =head1 LECTROTEST HOME
 
-The LectroTest home is
-L<http:E<sol>E<sol>community.moertel.comE<sol>LectroTest>.  There you
-will find more documentation, presentations, a wiki, and other helpful
-LectroTest-related resources.  It's also the best place to ask
-questions.
+The LectroTest home is 
+http://community.moertel.com/LectroTest.
+There you will find more documentation, presentations, a wiki,
+and other helpful LectroTest-related resources.  It's also the
+best place to ask questions.
 
 =head1 AUTHOR
 
@@ -178,11 +186,13 @@ Tom Moertel (tom@moertel.com)
 
 The LectroTest project was inspired by Haskell's fabulous
 QuickCheck module by Koen Claessen and John Hughes:
-L<http:E<sol>E<sol>www.cs.chalmers.seE<sol>~rjmhE<sol>QuickCheckE<sol>>.
+http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright 2004 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
+
+=cut

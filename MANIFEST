@@ -12,4 +12,5 @@ README
 t/001.t
 t/002.t
 t/003.t
+t/004.t
 TODO

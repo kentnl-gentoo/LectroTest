@@ -3,8 +3,24 @@
 LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
+* 0.20_04  Documentation improvements, minor code improvements (2004-09-13)
 
-* 0.20_03  (2004-09-11)
+** Fixes
+
+- Some links in documentation were broken.
+
+** Improvements
+
+- Vastly improved docs: All modules now have decent documentation.
+  (Tutorial still needs step-by-steps, tho.)
+
+- More pre-flight checks and better error reporting.
+
+- Cleaned up Test::LectroTest's hack for running property checks and
+  end of load.
+
+
+* 0.20_03  Bugfix and doc improvements (2004-09-11)
 
 ** Fixes
 
@@ -19,7 +35,7 @@ Tom Moertel (tom@moertel.com)
   generator binding and emits and error in that case.  ($tcon is used
   for the test controller.)
 
-- TestRunner will now catch and report exceptions thown during
+- TestRunner will now catch and report exceptions thrown during
   property checks:
 
   - A thrown exception results in test failure.
@@ -31,10 +47,12 @@ Tom Moertel (tom@moertel.com)
     - undef if no exception was thrown during testing
     - the exception otherwise
 
+
 * 0.20_02  Documentation improvements (2004-09-09)
 
 - Added README (d'oh!) from Test::LectroTest.
 - Updated docs in Test::LectroTest.
+
 
 * 0.20_01  First Pre-CPAN upload release (2004-09-09)
 
@@ -46,12 +64,11 @@ Tom Moertel (tom@moertel.com)
   LectroTest::*      -> Test::LectroTest::*
   LectroTest::Simple -> Test::LectroTest
 
+
 * 0.10_02  First public release (2004-09-08)
 
 - Clean ups
 
+
 * 0.10_01  First cut
-
-
-* Everything below is for Emacs (please ignore)
 
