@@ -7,11 +7,11 @@ BEGIN { use_ok( 'Test::LectroTest::Generator', qw(:common :combinators) ) }
 
 =head1 NAME
 
-001.t - Unit tests for Test::LectroTest::Generator
+gens.t - Unit tests for Test::LectroTest::Generator
 
 =head1 SYNOPSIS
 
-    perl -Ilib t/001.t
+    perl -Ilib t/gens.t
 
 =head1 DESCRIPTION
 
@@ -67,8 +67,6 @@ for (qw/Int Bool Float Char String List Elements(1) Unit(1)
     ok($g->isa('Test::LectroTest::Generator'),
        "$_ ctor returns a Test::LectroTest::Generator");
 }
-
-sub all { $_ || return 0 for @_; 1 }  # courtesy of List::Util
 
 
 #==============================================================================

@@ -4,6 +4,20 @@ LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
 
+* 0.3200   (2005-03-03)
+
+** Improvements
+
+- You can now attach notes and variable dumps to trials.  In the
+  event the trial fails, the notes will be emitted as part of the
+  counterexample to aid in debugging.
+      See Test::LectroTest::TestRunner::testcontroller for the
+  documentation on the new $tcon->note() and $tcon->dump() methods.
+
+- Strings in counterexamples are now printed in double-quoted form.
+  This makes it easy to see invisibles.
+
+
 * 0.3100   (2005-02-19)
 
 - This release is identical to 0.3000 except that for this release I

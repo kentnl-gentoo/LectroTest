@@ -232,6 +232,7 @@ sub run {
 
             unless ( $success ) {
                 $results->counterexample_( $inputs );
+                $results->notes_( $controller->notes );
                 $results->attempts( $attempts );
                 return $results;
             }
@@ -360,11 +361,12 @@ The number assigned to the property that was checked.
 =item counterexample
 
 Returns the counterexample that "broke" the code being tested, if
-there is one.  Otherwise, returns an empty string.
+there is one.  Otherwise, returns an empty string.  If any notes
+have been attached to the failing trial, they will be included.
 
 =item labels
 
-Label counts.  If any labels were applied to trails during the
+Label counts.  If any labels were applied to trials during the
 property check, this value will be a reference to a hash mapping each
 combination of labels to the count of trials that had that particular
 combination.  Otherwise, it will be undefined.
@@ -433,6 +435,7 @@ struct( name            => '$',
         success         => '$',
         labels          => '$',
         counterexample_ => '$',
+        notes_          => '$',
         exception       => '$',
         attempts        => '$',
         incomplete      => '$',
@@ -471,7 +474,7 @@ sub details {
 
 sub label_frequencies {
     my $self = shift;
-    my $l = $self->labels || {} ;
+    my $l = $self->labels;
     my $total = $self->attempts;
     my @keys = sort { $l->{$b} <=> $l->{$a} } keys %$l;
     join( "\n",
@@ -487,7 +490,15 @@ sub counterexample {
     my $sorted_keys = [ sort keys %$vars ];
     no warnings 'once';
     local $Data::Dumper::Sortkeys = 1;
-    return Data::Dumper->new([@$vars{@$sorted_keys}], $sorted_keys)->Dump;
+    local $Data::Dumper::Useqq    = 1;
+    return Data::Dumper->new([@$vars{@$sorted_keys}], $sorted_keys)->Dump .
+           $self->notes;
+}
+
+sub notes {
+    my $self = shift;
+    my $notes = $self->notes_;
+    return $notes ? join("\n", "Notes:", @$notes, "") : "";
 }
 
 =pod 
@@ -505,7 +516,7 @@ The following methods are available.
 package Test::LectroTest::TestRunner::testcontroller;
 import Class::Struct;
 
-struct ( labels => '$', retried => '$' );
+struct ( labels => '$', retried => '$', notes => '$' );
 
 =pod
 
@@ -521,7 +532,15 @@ struct ( labels => '$', retried => '$' );
 
 Stops the current trial and tells the TestRunner to re-try it
 with new inputs.  Typically used to reject a particular case
-of inputs that doesn't make for a good or valid test.
+of inputs that doesn't make for a good or valid test.  While
+not required, you will probably want to call C<$tcon-E<gt>retry>
+as part of a C<return> statement to prevent further execution
+of your property's logic, the results of which will be thrown
+out should it run to completion.
+
+The return value of C<$tcon-E<gt>retry> is itself meaningless; it is
+the side-effect of calling it that causes the current trial to be
+thrown out and re-tried.
 
 =cut
 
@@ -532,7 +551,7 @@ sub retry {
 
 =pod
 
-=item label
+=item label(I<string>)
 
     Property {
       ##[ x <- Int ]##
@@ -550,7 +569,7 @@ L</labels> for more.
 
 sub label {
     my $self = shift;
-    my $labels = $self->labels || [];
+    my $labels = $self->labels;
     push @$labels, @_;
     $self->labels( $labels );
 }
@@ -573,11 +592,95 @@ sub trivial {
     shift->label("trivial");
 }
 
+
+=pod
+
+=item note(I<string>...)
+
+    Property {
+      ##[ s <- String( charset=>"A-Za-z0-9" ) ]##
+      my $s_enc     = encode($s);
+      my $s_enc_dec = decode($s_enc);
+      $tcon->note("s_enc     = $s_enc",
+                  "s_enc_dec = $s_enc_dec");
+      $s eq $s_enc_dec;
+    }, name => "decode is encode's inverse" ;
+
+Adds a note (or notes) to the current trial.  In the event that the
+trial fails, these notes will be emitted as part of the
+counterexample.  For example:
+
+    1..1
+    not ok 1 - property 'decode is encode's inverse' \
+        falsified in 68 attempts
+    #     Counterexample:
+    #     $s = "0";
+    #     Notes:
+    #     $s_enc     = "";
+    #     $s_enc_dec = "";
+
+Notes can help you debug your code when something goes wrong.  Use
+them as debugging hints to yourself.  For example, you can use notes
+to record the output of each stage of a multi-stage test.  That way,
+if the test fails, you can see what happened in each stage without
+having to plug the counterexample into your code under a debugger.
+
+If you want to include complicated values or data structures in your
+notes, see the C<dump> method, next, which may be more appropriate.
+
+
+=cut
+
+sub note {
+    my $self = shift;
+    my $notes = $self->notes;
+    push @$notes, @_;
+    $self->notes( $notes );
+}
+
+=pod
+
+=item dump(I<value>, I<name>)
+
+    Property {
+      ##[ s <- String ]##
+      my $s_enc     = encode($s);
+      my $s_enc_dec = decode($s_enc);
+      $tcon->dump($s_enc, "s_enc");
+      $tcon->dump($s_enc_dec, "s_enc_dec");
+      $s eq $s_enc_dec;
+    }, name => "decode is encode's inverse" ;
+
+Adds a note to the current trial in which the given I<value> is
+dumped.  The value will be dumped via L<Data::Dumper> and thus may
+be complex and contain weird control characters and so on.  If you
+supply a I<name>, it will be used to name the dumped value.
+
+In the event that the trial fails, the note (and any others) will be
+emitted as part of the counterexample.
+
+See C<note> above for more.
+
+=cut
+
+sub dump {
+    my $self = shift;
+    my ($val, $name) = @_;
+    local $Data::Dumper::Sortkeys = 1;
+    local $Data::Dumper::Useqq    = 1;
+    local $Data::Dumper::Indent   = 0;
+    my @names = $name ? ([$name]) : ();
+    $self->note( Data::Dumper->new( [$val], @names )->Dump );
+}
+
+
 =pod
 
 =back
 
 =cut
+
+
 
 package Test::LectroTest::TestRunner;
 
@@ -592,7 +695,7 @@ you can put inside of your property specifications.
 
 The LectroTest home is 
 http://community.moertel.com/LectroTest.
-There you will find more documentation, presentations, a wiki,
+There you will find more documentation, presentations, mailing-list archives, a wiki,
 and other helpful LectroTest-related resources.  It's also the
 best place to ask questions.
 

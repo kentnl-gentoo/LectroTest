@@ -53,8 +53,8 @@ DESCRIPTION
     we bound to the generators earlier. LectroTest automagically loads these
     lexically bound Perl variables with values behind the scenes.)
 
-    Note: If you want to use test functions like "ok" from Test::Simple or
-    "is", "like", or "cmp_ok" from Test::More (and the related family of
+    Note: If you want to use testing assertions like "ok" from Test::Simple
+    or "is", "like", or "cmp_ok" from Test::More (and the related family of
     Test::Builder-based testing modules), see Test::LectroTest::Compat,
     which lets you mix and match LectroTest with these modules.
 
@@ -149,9 +149,9 @@ SEE ALSO
 
 LECTROTEST HOME
     The LectroTest home is http://community.moertel.com/LectroTest. There
-    you will find more documentation, presentations, a wiki, and other
-    helpful LectroTest-related resources. It's also the best place to ask
-    questions.
+    you will find more documentation, presentations, mailing-list archives,
+    a wiki, and other helpful LectroTest-related resources. It's also the
+    best place to ask questions.
 
 AUTHOR
     Tom Moertel (tom@moertel.com)

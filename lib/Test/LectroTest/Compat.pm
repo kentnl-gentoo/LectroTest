@@ -39,11 +39,12 @@ Test::LectroTest::Compat - Use LectroTest property checks in a Test::Simple worl
 =head1 DESCRIPTION
 
 This module lets you use mix LectroTest property checking with other
-popular Test::* modules.  With it, you can use C<ok()>-style checks
-from Test::* modules within your LectroTest property specifications
-and you can check LectroTest properties as part of a Test::Simple or
-Test::More test plan.  (You can actually take advantage of any
-module based on Test::Builder, not just Test::Simple and Test::More.)
+popular Test::* modules.  With it, you can use C<is()>- and
+C<ok()>-style assertions from Test::* modules within your LectroTest
+property specifications and you can check LectroTest properties as
+part of a Test::Simple or Test::More test plan.  (You can actually
+take advantage of any module based on Test::Builder, not just
+Test::Simple and Test::More.)
 
 The module exports a single function C<holds> which is described
 below.
@@ -104,7 +105,6 @@ sub holds {
 }
 
 sub check_property {
-    no strict 'refs';
     no warnings 'redefine';
     my $diag_store = [];
     my $property = shift;
@@ -162,7 +162,7 @@ is built.
 
 The LectroTest home is 
 http://community.moertel.com/LectroTest.
-There you will find more documentation, presentations, a wiki,
+There you will find more documentation, presentations, mailing-list archives, a wiki,
 and other helpful LectroTest-related resources.  It's also the
 best place to ask questions.
 
