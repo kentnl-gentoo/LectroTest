@@ -268,7 +268,7 @@ with the B<charset> modifier:
 
 =over 4
 
-=item Char( charset=>[I<cset>] )
+=item Char( charset=>I<cset> )
 
 Characters will be drawn from the character set given by the
 character-set specification I<cset>.  The syntax of I<cset> is
@@ -483,11 +483,11 @@ can be changed using modifiers:
 
 =over 4
 
-=item String( charset=>[I<cset>] )
+=item String( charset=>I<cset> )
 
 Characters will be drawn from the character set given by the
 character-set specification I<cset>.  The syntax of I<cset> is
-similar the Perl C<tr> builtin and is a string comprised of
+similar the Perl C<tr> operator and is a string comprised of
 characters and character ranges.  See Char for a full
 description.
 
@@ -514,7 +514,7 @@ sub String(@) {
 
     my $gen = Elements( "alpha", "beta", "gamma" );
 
-Creates a generator that choses among the given elements I<e1>, I<e2>,
+Creates a generator that chooses among the given elements I<e1>, I<e2>,
 ... with equal probability.  Each call to the C<generate> method will
 return one of the element values.  Sizing guidance has no effect on
 this generator.
@@ -692,7 +692,7 @@ sub Sized(&$) {
 
  show("Ints (sized by default)", Int);
 
- show("Floats (unsized by default)", Float);
+ show("Floats (sized by default)", Float);
 
  show("Percentages (unsized)",
       Int( range=>[0,100], sized=>0 ));
@@ -701,11 +701,11 @@ sub Sized(&$) {
       List( Int( sized=>0, range=>[0,10] ) ));
 
  show("Uppercase-alpha identifiers at least 3 chars long",
-      String( length=>[3,], range=>[ord'A',ord'Z'] ));
+      String( length=>[3,], charset=>"A-Z" ));
 
 
  show("Hashes (sized by default) of form AAA=>Digit",
-      Hash( String( length=>3, range=>[ord'A',ord'Z'] ),
+      Hash( String( length=>3, charset=>"A-Z" ),
             Int( sized=>0, range=>[0,9] ) ));
 
  sub show {
@@ -730,7 +730,7 @@ sub Sized(&$) {
 
 =head1 ADVANCED EXAMPLES
 
-For these exmaples we use C<Data::Dumper> to inspect the data
+For these examples we use C<Data::Dumper> to inspect the data
 structures we generate.  Also, we import not only the common generator
 constructors (like Int) but also the generic Gen constructor, which
 lets us build on-the-fly generators out of blocks.

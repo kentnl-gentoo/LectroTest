@@ -45,7 +45,7 @@ down" (false) if it finds a needle:
   the_thing_we_are_testing($x, $c) >= 0;
 
 The above asserts for each point in the haystack that the output
-of the_thing_we_are_testing() must be non-negative.
+of C<the_thing_we_are_testing> must be non-negative.
 
 =head2 Put them together to get a Property
 
@@ -58,19 +58,23 @@ LectroTest::Property:
   }, name => "the_thing_we_are_testing(...) is non-negative";
 
 You'll note that we also added a meaningful name.  Although not
-strictly required, it's an excellent practice.
+strictly required, it's an excellent practice that makes life easier.
+(You'll also note that we placed the generator bindings inside of the
+magic delimiters C<##[ ]##>.  This tells Perl that our bindings are
+bindings and not regular Perl code.)
 
 We can read the above property like so: "For all integers I<x> and all
 characters I<c> in the range A through Z, we assert that
-the_thing_we_are_testing is non_negative."  See?  That's not too bad.
+C<the_thing_we_are_testing> is non_negative."  
 
 =head2 Testing whether your Properties hold
 
-When you define properties for your software, just add them to
+After you define properties for your software, just add them to
 a small Perl program that uses the Test::LectroTest module:
 
   # MyProperties.l.t
 
+  use MyModule;  # provides the_thing_we_are_testing
   use Test::LectroTest;
 
   Property {
@@ -94,11 +98,11 @@ it happened:
   not ok 1 - 'the_thing_we_are_testing(...) is non-negative' \
     falsified in 23 attempts
   # Counterexample:
-  # $x = -4
+  # $x = 4
   # $c = "R"
 
-What this means is that at the point (I<x>=-4, I<c>="R") in the
-haystack, there is a needle (i.e., you're property didn't hold).
+What this means is that at the point (I<x>=4, I<c>="R") in the
+haystack, there is a needle (i.e., your property doesn't hold).
 With this information, you can examine your code to determine
 the cause of the error.
 
@@ -107,10 +111,10 @@ the cause of the error.
 Now that we have big-picture understanding of "LectroTesting," let's
 try a few examples together.
 
-[To do: write the step-by-step tutorial examples.  For now,
+[TODO: write the step-by-step tutorial examples.  For now,
 take a look at the slides from my LectroTest talk for two
 such examples.  The slides are available at the
-L<LectroTest Home|/"LECTROTEST HOME">.
+L<LectroTest Home|/"LECTROTEST HOME">.]
 
 
 

@@ -22,10 +22,15 @@ X Combinators
 
 - Docs
 
+- Repeatability
+  - Emit the RNG seed at the outset of the tests for repeatability
+  - Accept an option to use a given seed
+
 * CPAN submission
 
-X Module list short description: "automatic, specification-based
-  testing tool"
+X Module list short description:
+
+  "automatic, specification-based testing tool"
 
 X Rename for better harmony with the global Perl namespace:
   LectroTest.pm --> Poof! (?)

@@ -3,11 +3,40 @@
 LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
-* 20_02  Minor fixes
 
-- Added README (d'oh!)
+* 0.20_03  (2004-09-11)
 
-* 20_01  First Pre-CPAN upload release (2004-08-09)
+** Fixes
+
+- !! Important fix: In generator bindings with more than one variable,
+  variables sometimes got each others' values.  
+
+** Improvements
+
+- Updated docs.
+
+- LectroTest::Property now pre-flight checks for the use of $tcon in a
+  generator binding and emits and error in that case.  ($tcon is used
+  for the test controller.)
+
+- TestRunner will now catch and report exceptions thown during
+  property checks:
+
+  - A thrown exception results in test failure.
+
+  - The "details" report will include a "Caught exception" section,
+    if needed.
+
+  - TestRunner::results now has an exception field:
+    - undef if no exception was thrown during testing
+    - the exception otherwise
+
+* 0.20_02  Documentation improvements (2004-09-09)
+
+- Added README (d'oh!) from Test::LectroTest.
+- Updated docs in Test::LectroTest.
+
+* 0.20_01  First Pre-CPAN upload release (2004-09-09)
 
 - Major documentation improvements
 
@@ -17,11 +46,11 @@ Tom Moertel (tom@moertel.com)
   LectroTest::*      -> Test::LectroTest::*
   LectroTest::Simple -> Test::LectroTest
 
-* 10_02  First public release (2004-08-08)
+* 0.10_02  First public release (2004-09-08)
 
 - Clean ups
 
-* 10_01  First cut
+* 0.10_01  First cut
 
 
 * Everything below is for Emacs (please ignore)

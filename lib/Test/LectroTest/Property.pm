@@ -12,7 +12,7 @@ my $debugQ = 0;  # set to 1 to emit source-filter results on STDERR
 
 =head1 NAME
 
-Test::LectroTest::Property - Automated random-data tests
+Test::LectroTest::Property - Specifications of the properties that your software must hold
 
 =head1 SYNOPSIS
 
@@ -43,20 +43,15 @@ unit tests, see Test::LectroTest first.
 
 This module allows you to define Properties that can be tested
 automatically by Test::LectroTest.  A Property defines a
-behaviorial characteristic that the software you're testing
+behavioral characteristic that the software you're testing
 must hold over a range of inputs.
 
-=over 4
+This documentation serves as reference documentation for LectroTest
+Properties.  If you don't understand the basics of Properties yet,
+see L<LectroTest::Tutorial/OVERVIEW> before continuing.
 
-=item 1
+[TODO: flesh out.]
 
-The shape of the haystack
-
-=item 2
-
-What a needle looks like
-
-=back
 
 
 =cut
@@ -85,9 +80,14 @@ sub new {
     my $class  = ref($self) || $self;
     my $inputs = shift;
     if ($inputs eq "inputs") { $inputs = shift; }
-    croak "Test::LectroTest::Property: invalid list of named parameters" if @_ % 2;
-    croak "Test::LectroTest::Property: invalid input specification" if @$inputs % 2;
-    return bless { %defaults, inputs => { @$inputs }, @_ }, $class;
+    croak "Test::LectroTest::Property: invalid list of named parameters"
+        if @_ % 2;
+    croak "Test::LectroTest::Property: invalid generator-binding list"
+        if @$inputs % 2;
+    $inputs = { @$inputs };
+    croak "cannot use reserved name 'tcon' in a generator binding"
+        if grep { 'tcon' eq $_ } keys %$inputs;
+    return bless { %defaults, inputs => $inputs, @_ }, $class;
 }
 
 sub import {
@@ -136,8 +136,9 @@ sub binding {
 sub body {
     my ($gen_decl_str) = @_;
     my @vars = $gen_decl_str =~ /(\w+)\s*<-/gs;
-    @vars = keys %{{ map {($_,1)} @vars }};  # must be in hash-key order
-    ' sub { my (' . join(',', map {"\$$_"} 't', @vars) . ') = @_;';
+    @vars = sort keys %{{ map {($_,1)} @vars }}; # uniq | sort
+    @vars = grep { 'tcon' ne $_ } @vars;  # disallow reserved var 'tcon'
+    ' sub { my (' . join(',', map {"\$$_"} 'tcon', @vars) . ') = @_;';
 }
 
 sub Property(&&@) {

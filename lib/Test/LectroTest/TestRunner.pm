@@ -10,7 +10,7 @@ use Test::LectroTest::Property qw( NO_FILTER );
 
 =head1 NAME
 
-Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for running LectroTest property tests
+Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for running LectroTest property checks
 
 =head1 SYNOPSIS
 
@@ -19,7 +19,7 @@ Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for 
  my @args = trials => 1_000, retries => 20_000;
  my $runner = Test::LectroTest::TestRunner->new(@args);
 
- # test a single property
+ # test a single property and print details upon failure
  my $result = $runner->run( $a_single_lectrotest_property );
  print $result->details unless $result->success;
 
@@ -29,7 +29,8 @@ Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for 
 
 =head1 DESCRIPTION
 
- To be written!
+For now, look at L<LectroTest::Property/SYNOPSIS> for
+a common manual usage of TestRunner.
 
 
 =cut
@@ -76,7 +77,7 @@ sub run {
     my $results = Test::LectroTest::TestRunner::results->new(
         name => $name, number => $number
     );
-    my @vars = keys %$gen_specs;
+    my @vars = sort keys %$gen_specs;
     my $retries = 0;
     my %labels;
     my $base_size = 0;
@@ -85,7 +86,8 @@ sub run {
         my $controller = Test::LectroTest::TestRunner::testcontroller->new();
         my $size = $self->scalefn->($base_size);
         my $inputs = { map {($_, $gen_specs->{$_}->generate($size))} @vars  };
-        my $success = eval { $testfn->($controller, values %$inputs) };
+        my $success = eval { $testfn->($controller, @$inputs{@vars}) };
+        $results->exception( do { my $ex=$@; chomp $ex; $ex } ) if $@;
         if ($controller->retried) {
             $retries++;
             if ($retries >= $self->retries) {
@@ -135,11 +137,13 @@ sub run_suite {
 
 package Test::LectroTest::TestRunner::results;
 use Class::Struct;
+import Data::Dumper;
 
 struct( name            => '$',
         success         => '$',
         labels          => '$',
         counterexample_ => '$',
+        exception       => '$',
         attempts        => '$',
         notes           => '$',
         number          => '$',
@@ -171,6 +175,11 @@ sub details {
     my $cx = $self->counterexample;
     if ( $cx ) {
         $details .= "Counterexample:\n$cx";
+    }
+    my $ex = $self->exception;
+    if ( $ex ) {
+        local $Data::Dumper::Terse = 1;
+        $details .= "Caught exception: " . Dumper($ex);
     }
     $details =~ s/^/\# /mg if $details;  # mark as Test::Harness comments
     return "$summary$details";

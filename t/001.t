@@ -11,7 +11,6 @@ BEGIN { use_ok( 'Test::LectroTest::Generator', qw(:common :combinators) ) }
 
 001.t - Unit tests for Test::LectroTest::Generator
 
-
 =head1 SYNOPSIS
 
     perl -Ilib t/001.t
@@ -752,6 +751,3 @@ Copyright (C) 2004 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
-
-
-$Id$

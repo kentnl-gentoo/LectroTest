@@ -11,4 +11,5 @@ META.yml
 README
 t/001.t
 t/002.t
+t/003.t
 TODO

@@ -8,7 +8,7 @@ use Filter::Util::Call;
 require Test::LectroTest::Property;
 require Test::LectroTest::Generator;
 
-our $VERSION = .20_02;
+our $VERSION = .20_03;
 
 =head1 NAME 
 
@@ -33,10 +33,10 @@ Test::LectroTest - Easy, automatic, specification-based tests
 =head1 DESCRIPTION
 
 This module provides a simple (yet full featured) interface to
-LectroTest, automated, specification-based testing system for Perl.
+LectroTest, an automated, specification-based testing system for Perl.
 To use it, you declare properties that specify the expected behavior
-of your software.  LectroTest then checks to see whether those
-properties hold.
+of your software.  LectroTest then checks your software see whether
+those properties hold.
 
 You declare properties using the Property function, which takes a
 block and promotes it to a LectroTest::Property:
@@ -51,28 +51,28 @@ declaration.  For example:
 
         ##[  x <- Int, y <- Int  ]##
 
-(Note the special bracketing, which must be present.)  This particular
+(Note the special bracketing, which is required.)  This particular
 binding says, "For all integers I<x> and I<y>."  (See
-LectroTest::Generator to see the whopping passel of generators that
+LectroTest::Generator for the passel of generators that
 are at your disposal.)
 
-The second part of the block is just a bit of code that makes use
-of the variables we bound earlier to test whether a property holds
+The second part of the block is simply a snippet of code that makes
+use of the variables we bound earlier to test whether a property holds
 for the piece of software we are testing:
 
         MyModule::my_function( $x, $y ) >= 0;
 
-In this case, it asserts that MyModule::my_function($x,$y) returns a
-non-negative result.  (Yes, C<$x> and C<$y> refer to the same I<x> and
-I<y> that we bound to the generators earlier.  LectroTest
-automagically loads these Perl variables with values behind the
-scenes.)
+In this case, it asserts that C<MyModule::my_function($x,$y)> returns
+a non-negative result.  (Yes, C<$x> and C<$y> refer to the same I<x>
+and I<y> that we bound to the generators earlier.  LectroTest
+automagically loads these lexically bound Perl variables with values
+behind the scenes.)
 
 Finally, we give the whole Property a name, in this case "my_function
 output is non-negative."  It's a good idea to use a meaningful name
 because LectroTest refers to properties by name in its output.
 
-Let's take a look at the finished property:
+Let's take a look at the finished property specification:
 
     Property {
         ##[ x <- Int, y <- Int ]##
@@ -86,10 +86,14 @@ To check whether this property holds, simply put it in a Perl program
 that uses the Test::LectroTest module.  (See the L</SYNOPSIS> for an
 example.)  When you run the program, LectroTest will load the property
 (and any others in the file) and check it by running random trials
-against the software.  If LectroTest "breaks" your software, it will
-emit a counterexample and stop.  You can plug the counterexample back
-into your software to debug the problem.  (You might also want to add
-the counterexample to a list of regression tests.)
+against the software you're testing.  (Note: A Property specification
+must appear in the first column, without any indentation, in order for
+it to be automatically loaded and checked.)
+
+If LectroTest "breaks" your software during the property check, it
+will emit a counterexample and stop.  You can plug the counterexample
+back into your software to debug the problem.  (You might also want to
+add the counterexample to a list of regression tests.)
 
 A successful LectroTest looks like this:
 
@@ -130,7 +134,7 @@ home (see below).
 =cut
 
 our $r;
-our @ts;
+our @props;
 our @opts;
 
 sub import {
@@ -145,13 +149,13 @@ sub import {
     filter_add( sub {
         my $status = filter_read();
         $_ .= 'END{Test::LectroTest::run()} ' unless $lines++;
-        s{^(?=Test|Property)\b}{push \@Test::LectroTest::ts, };
+        s{^(?=Test|Property)\b}{push \@Test::LectroTest::props, };
         $subfilter->( $status );
     });
 }
 
 sub run {
-    $r->run_suite( @ts, @opts );
+    $r->run_suite( @props, @opts ) if @props;
 }
 
 1;
