@@ -33,7 +33,6 @@ Property {
       abs($sx * $sx - $x) < $epsilon;
 }, name => "my_sqrt satisfies defn of square root";
 
-
 sub my_thing_to_test { 1 }
 
 Property {
@@ -43,7 +42,6 @@ Property {
     1;
 }, name => "my_thing_to_test ignores fractions" ;
 
-
 {
   my $prop = Test::LectroTest::Property->new(
     inputs => [ i => Int, delta => Float(range=>[0,1]) ],
@@ -51,7 +49,6 @@ Property {
         my ($tcon, $delta, $i) = @_;
         my $lo_val = my_thing_to_test($i);
         my $hi_val = my_thing_to_test($i + $delta);
-        1;
     },
     name => "my_thing_to_test ignores fractions"
   ) ;

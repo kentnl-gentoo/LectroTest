@@ -11,18 +11,19 @@ BEGIN {
     use Exporter ();
     our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
+    my @gens     = qw( &Int &Bool &Char &String &List &Hash
+                       &Float &Elements &Unit );
+    my @combs    = qw( &Paste &OneOf &Frequency &Sized &Each
+                       &Apply &Map
+                       &Concat &Flatten &ConcatMap &FlattenMap );
+    my @specials = qw( &Gen) ;
+
     @ISA         = qw(Exporter);
     @EXPORT      = ();
-    @EXPORT_OK   = qw(&Gen &Int &Bool &Char &String &List &Hash &Float
-                      &Unit &Elements &Paste &OneOf &Frequency &Sized
-                      &Each &Apply &Map &Concat &Flatten &ConcatMap
-                      &FlattenMap);
-    %EXPORT_TAGS = (common => [qw(&Int &Bool &Char &String &List &Hash
-                                  &Float &Elements &Unit &Apply &Map
-                                  &Concat &Flatten &ConcatMap
-                                  &FlattenMap)],
-                    combinators => [qw(&Paste &OneOf &Frequency &Sized
-                                       &Each)]);
+    @EXPORT_OK   = ( @gens, @combs, @specials);
+    %EXPORT_TAGS = ( common      => [@gens]
+                   , combinators => [@combs]
+                   , all         => [@gens, @combs, @specials] );
 }
 
 our @EXPORT_OK;
@@ -84,7 +85,7 @@ single argument, I<size> and returns a new random value.  The
 generated value is always a scalar.  Generators that produce data
 structures return references to them.
 
-=head2 SIZING GUIDANCE
+=head2 Sizing guidance
 
 The C<generate> method interprets its I<size> argument as guidance
 about the complexity of the value it should create.  Typically,
@@ -156,9 +157,12 @@ sub Gen(&) {
 
 =pod 
 
-=head2 GENERATORS
+=head2 Generators
 
 The following functions create fully-formed generators, ready to use.
+These functions are exported into your code's namespace if you ask for
+C<:generators> or C<:all> when you C<use> this module.
+
 Each generator has a C<generate> method that you can call to extract
 a new, random value from the generator.
 
@@ -613,10 +617,18 @@ sub Unit($) {
 
 =back
 
-=head2 GENERATOR COMBINATORS
+
+
+
+
+
+=head2 Generator combinators
 
 The following combinators allow you to build more complicated
-generators from simpler ones.  
+generators from simpler ones.  These combinators are exported into
+your code's namespace if you ask for C<:combinators> or C<:all> when
+you C<use> this module.
+
 
 =over 4
 
@@ -952,16 +964,16 @@ sub FlattenMap(&@) {
 
 =pod
 
-=item Sized(I<BLOCK>, I<gen>)
+=item Sized(I<fn>, I<gen>)
 
     my $gen = Sized { 2 * $_[0] } List(Int);
         # ^ magnify sizing guidance by factor of two
     my $gen2 = Sized { 10 } Int;
         # ^ use constant guidance of 10
 
-Creates a generator that adjusts sizing guidance by passing
-it through the function given in I<BLOCK> and then calls the
-generator I<gen> using the adjusted guidance.
+Creates a generator that adjusts sizing guidance by passing it through
+the function I<fn>. Then it calls the generator I<gen> with the
+adjusted guidance and returns the result.
 
 B<Note:> This combinator does not accept modifiers.
 
@@ -978,7 +990,7 @@ sub Sized(&$) {
 
 =back
 
-=head2 ROLLING YOUR OWN GENERATORS
+=head2 Rolling your own generators
 
 You can create your own generators by creating any object that
 has a C<generate> method.  Your method should accept as its
@@ -1010,8 +1022,9 @@ combinator:
   my $ctime_gen2 = Apply { localtime $_[0] } $time_gen;
 
 
-B<Note:> C<Gen> is not imported into your module's namespace by default.
-If you want to use it, you must ask for it by name.
+B<Note:> C<Gen> is not exported into your code's namespace by default.
+If you want to use it, you must import it by name or import C<:all>
+when you use this module.
 
 =cut
 
@@ -1019,7 +1032,12 @@ If you want to use it, you must ask for it by name.
 
 
 
-=head1 SIMPLE EXAMPLES
+=head1 EXAMPLES
+
+Here are some examples to consider.
+
+
+=head2 Simple examples
 
  use strict;
  use Test::LectroTest::Generator qw(:common);
@@ -1062,7 +1080,7 @@ If you want to use it, you must ask for it by name.
      }
  }
 
-=head1 ADVANCED EXAMPLES
+=head2 Advanced examples
 
 For these examples we use C<Data::Dumper> to inspect the data
 structures we generate.  Also, we import not only the common generator
@@ -1110,6 +1128,11 @@ trees, and trees generate branches, we use a reference trick
 to set up the mutually recursive relationship.  This we encapsulate
 within a B<do> block for tidiness.
 
+
+=head1 SEE ALSO
+
+L<Test::LectroTest> gives a quick overview of automatic,
+specification-based testing with LectroTest.
 
 
 =head1 LECTROTEST HOME

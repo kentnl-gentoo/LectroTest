@@ -67,7 +67,7 @@ about bad arguments in its pre-flight checks:
 eval {
     Test::LectroTest::Property->new();
 };
-like( $@, qr/did not get list of valid input-generator bindings/,
+like( $@, qr/test subroutine must be provided/,
       "pre-flight check catches new w/ no args" );
 
 

@@ -6,8 +6,6 @@ use warnings;
 use Carp;
 use Filter::Util::Call;
 
-use Test::LectroTest::Generator qw( :common :combinators );
-
 use constant NO_FILTER => 'NO_FILTER';
 my $debugQ = 0;  # set to 1 to emit source-filter results on STDERR
 
@@ -39,17 +37,19 @@ Test::LectroTest::Property - Specifications of properties that your software mus
 
 =head1 DESCRIPTION
 
-B<STOP!>  If you're just looking for an easy way to write and run
-unit tests, see Test::LectroTest.
+B<STOP!> If you're just looking for an easy way to write and run unit
+tests, see L<Test::LectroTest> first.  Once you're comfortable with
+what is presented there and ready to delve into the full offerings of
+properties, this is the document for you.
 
 This module allows you to define Properties that can be checked
-automatically by Test::LectroTest.  A Property is a specification of
-your software's required behavior over a given set of conditions.  The
-set of conditions is given by a generator-binding specification. The
-required behavior is defined implicitly by a block of code that tests
-your software's observed behavior for a given set of generated
-conditions against the expected behavior and either accepts or rejects
-the observed behavior.
+automatically by L<Test::LectroTest>.  A Property is a specification
+of your software's required behavior over a given set of conditions.
+The set of conditions is given by a generator-binding
+specification. The required behavior is defined implicitly by a block
+of code that tests your software's observed behavior for a given set
+of generated conditions against the expected behavior and either
+accepts or rejects the observed behavior.
 
 This documentation serves as reference documentation for LectroTest
 Properties.  If you don't understand the basics of Properties yet,
@@ -127,17 +127,29 @@ sub new {
     my $class  = ref($self) || $self;
     croak "$pkg: invalid list of named parameters"
         if @_ % 2;
-    my %args = @_;
-    my $inputs = $args{inputs};
-    croak "$pkg: did not get list of valid input-generator bindings"
-        if ref($inputs) ne "ARRAY" || @$inputs % 2;
-    delete $args{inputs};
-    $inputs = { @$inputs };
-    croak "$pkg: cannot use reserved name 'tcon' in a generator binding"
-        if grep { 'tcon' eq $_ } keys %$inputs;
+    my %args  = @_;
     croak "$pkg: test subroutine must be provided"
         if ref($args{test}) ne 'CODE';
-    return bless { %defaults, inputs => $inputs, %args }, $class;
+    croak "$pkg: did not get a set of valid input-generator bindings"
+        if ref($args{inputs}) ne "ARRAY";
+    $args{inputs} = [$args{inputs}] unless ref $args{inputs}[0];
+    my $inputs_list = [];
+    my $last_vars;
+    for my $inputs (@{$args{inputs}}) {
+        croak "$pkg: did not get a set of valid input-generator bindings"
+            if ref($inputs) ne "ARRAY" || @$inputs % 2;
+        $inputs = { @$inputs };
+        croak "$pkg: cannot use reserved name 'tcon' in a generator binding"
+            if grep { 'tcon' eq $_ } keys %$inputs;
+        my @vars = sort keys %$inputs;
+        croak "$pkg: each set of generator bindings must bind the same "
+            . "set of variables but (@vars) does not match ($last_vars)"
+            if $last_vars && $last_vars ne "@vars";
+        $last_vars = "@vars";
+        push @$inputs_list, $inputs;
+    }
+    delete $args{inputs};
+    return bless { %defaults, inputs => $inputs_list, %args }, $class;
 }
 
 
@@ -156,10 +168,9 @@ the tests of your software's behavior.  The number and kind of
 generators define the "condition space" that is examined during
 property checks.
 
-If you use the C<Property> function to create your
-Test::LectroTest::Property objects, your generator-binding
-specification must come first in your code block, and you must use the
-following syntax:
+If you use the C<Property> function to create your properties, your
+generator-binding specification must come first in your code block,
+and you must use the following syntax:
 
   ##[ var1 <- gen1, var2 <- gen2, ... ]##
 
@@ -190,23 +201,66 @@ a comment:
 On the other hand, if you use C<Test::LectroTest::Property-E<gt>new()>
 to create your objects, the generator-binding specification takes the
 form of an array reference containing variable-generator pairs that is
-passed to C<new()> as a named parameter:
+passed to C<new()> via the parameter named C<inputs>:
 
   inputs => [ var1 => gen1, var2 => gen2, ... ]
 
-Normal Perl syntax applies.
+Normal Perl syntax applies here.
+
+
+=head2 Specifying multiple sets of generator bindings
+
+Sometimes you may want to repeat a property check with multiple sets
+of generator bindings.  This can happen, for instance, when your
+condition space is vast and you want to ensure that a particular
+portion of it receives focused coverage while still sampling the
+overall space.  For times like this, you can list specify multiple
+sets of bindings within the C<##[> and C<]##> delimiters, like so:
+
+  ##[ var1 <- gen1A, ... ],
+    [ var1 <- gen1B, ... ],
+    ... more sets of bindings ...
+    [ var1 <- gen1N, ... ]##
+
+Note that only the first and last set need the special delimiters.
+
+The equivalent when using C<new()> is as follows:
+
+  inputs => [ [ var1 => gen1A, ... ],
+              [ var1 => gen1B, ... ],
+              ...
+              [ var1 => gen1N, ... ] ]
+
+Regardless of how you declare the sets of bindings, each set must
+provide bindings for the exact same set of variables.  (The
+generators, of course, can be different.)  For example, this kind of
+thing is illegal:
+
+  ##[ x <- Int ], [ y <- Int ]##
+
+The above is illegal because both sets of bindings must use I<x> or
+both must use I<y>; they can't each use a different variable name.
+
+  ##[ x <- Int             ],
+    [ x <- Int, y <- Float ]##
+
+The above is illegal because the second set has an extra variable that
+isn't present in the first.  Both sets must use exactly the same
+variables.  None of the variables may be extra, none may be missing,
+and all must be named identically across the sets of bindings.
+
 
 
 =head2 Behavior test
 
 The behavior test is a subroutine that accepts a test-controller
 object and a given set of input conditions, tests your software's
-observed behavior with respect to the input conditions against the
-required behavior, and returns true or false to indicate acceptance or
-rejection.  If you are using the C<Property> function to create
-your property objects, lexical variables are declared and loaded
-automatically per your input-generator specification, so you
-can just use the variables immediately:
+observed behavior against the required behavior with respect to the
+input conditions, and returns true or false to indicate acceptance or
+rejection.  If you are using the C<Property> function to create your
+property objects, lexically bound variables are created and loaded
+with values automatically, per your input-generator specification, so
+you can just go ahead and use the variables immediately:
 
   my $prop = Property {
     ##[ i <- Int, delta <- Float(range=>[0,1]) ]##
@@ -290,7 +344,7 @@ trials checked this case:
   ok 1 - 'my_sqrt satisfies defn of square root' (1000 attempts)
   #   1% less than one
 
-=head1 Trivial cases
+=head2 Trivial cases
 
 Random-input generators may create some inputs that are trivial and
 don't provide much testing value.  To make it easy to label such
@@ -320,16 +374,16 @@ sub make_code_filter {
         my $status = shift;
         if ( defined $status ? $status : ($status = filter_read()) ) {
             if (s| \#\# ( \[ .*?  ) \#*\s*\]\#\# |
-                   binding($1)."]}".body($1) |exs) {
+                   "[".binding($1)."]]}".body($1) |exs) {
                 # 1-line decl
             }
-            elsif (s| \#\# ( \[.* ) | binding($1) |exs) {
+            elsif (s| \#\# ( \[.* ) | "[".binding($1) |exs) {
                 # opening of multi-line decl
                 $content .= " $1";
             }
             elsif ($content && 
                    s| ^(.*?)\#*\s*\]\#\# |
-                      binding($1)."]}".body("$content$1") |exs) {
+                      binding($1)."]]}".body("$content$1") |exs) {
                 # close of multi-line decl
                 $content = "";
             }
@@ -362,11 +416,23 @@ sub body {
 
 =pod
 
-=head1 CAVEAT
+=head1 SEE ALSO
+
+L<Test::LectroTest::Generator> describes the many generators and
+generator combinators that you can use to define the test or
+condition spaces that you want LectroTest to search for bugs.
+
+L<Test::LectroTest::TestRunner> describes the objects that check your
+properties and tells you how to turn their control knobs.  You'll want
+to look here if you're interested in customizing the testing
+procedure.
+
+
+=head1 HERE BE SOURCE FILTERS
 
 The special syntax used to specify generator bindings relies upon a
-source filter (see Filter::Util::Call).  If you don't want to use the
-syntax, you can disable the filter like so:
+source filter (see L<Filter::Util::Call>).  If you don't want to use
+the syntax, you can disable the filter like so:
 
     use Test::LectroTest::Property qw( NO_FILTER );
 

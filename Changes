@@ -3,7 +3,36 @@
 LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
-* 0.20_06  New combinators, doc fixes (2004-09-__)
+
+* 0.20_07   (2004-09-30)
+
+** Improvements
+
+- You can now specify multiple sets of generator-bindings for a
+  property.  This lets you focus on specific portions of your test
+  space to ensure the desired coverage.  For example, if you wanted
+  to cover all integers but especially focus on the range [-1,1]:
+
+  Property {
+      ##[ x <- Int ], [ x <- Int(range=>[-1,1]) ]##
+      blah($x) != 0
+  }, name => "blah result is non-zero" ;
+
+- Generator now accepts an :all export tag to export everything
+  (which is what I use almost all of the time).
+
+- If a generator throws an exception, it is caught and reported
+  specifically in a special warning counterexample.
+
+- Expanded test suite for TestRunner and Property.
+
+** Fixes
+
+- Some of the new combinators were listed under the :common
+  export tag instead of under :combinators.
+
+
+* 0.20_06  New combinators, doc fixes (2004-09-15)
 
 ** Improvements
 

@@ -8,7 +8,7 @@ use Filter::Util::Call;
 require Test::LectroTest::Property;
 require Test::LectroTest::Generator;
 
-our $VERSION = 0.20_06;
+our $VERSION = 0.20_07;
 
 =head1 NAME 
 
@@ -121,22 +121,15 @@ C<trials=E<gt>>I<N> flag:
 
 =head1 CAVEATS
 
+When you use this module, it imports all of the generator-building
+functions from L<Test::LectroTest::Generator> into the your code's
+namespace.  This is almost always what you want, but I figured I ought
+to say something about it here to reduce the possibility of surprise.
+
 A Property specification must appear in the first column, i.e.,
 without any indentation, in order for it to be automatically loaded
 and checked.  If this poses a problem, let me know, and this
 restriction can be lifted.
-
-=head1 SEE ALSO
-
-For a more in-depth introduction to LectroTest, see
-Test::LectroTest::Tutorial.  For more information on the various parts
-of LectroTest, see Test::LectroTest::Property,
-Test::LectroTest::Generator, and Test::LectroTest::TestRunner.
-
-Also, the slides from my LectroTest talk for the Pittsburgh Perl
-Mongers make for a great introduction.  Download a copy from the
-LectroTest home (see below).
-
 
 =cut
 
@@ -148,7 +141,7 @@ sub import {
     my $self = shift;
     Test::LectroTest::Property->export_to_level(1, $self);
     Test::LectroTest::Generator->export_to_level(
-        1, $self, qw(:common :combinators Gen) );
+        1, $self, qw(:all) );
     @opts = @_;
     $r = Test::LectroTest::TestRunner->new( @_ );
     my $lines = 0;
@@ -169,6 +162,26 @@ END { Test::LectroTest::run() }
 1;
 
 __END__
+
+
+=head1 SEE ALSO
+
+For a gentle introduction to LectroTest, see
+L<Test::LectroTest::Tutorial>.  Also, the slides from my LectroTest
+talk for the Pittsburgh Perl Mongers make for a great introduction.
+Download a copy from the LectroTest home (see below).
+
+L<Test::LectroTest::Property> explains in detail what
+you can put inside of your property specifications.
+
+L<Test::LectroTest::Generator> describes the many generators and
+generator combinators that you can use to define the test or
+condition space that you want LectroTest to search for bugs.
+
+L<Test::LectroTest::TestRunner> describes the objects that check your
+properties and tells you how to turn their control knobs.  You'll want
+to look here if you're interested in customizing the testing
+procedure.
 
 
 =head1 LECTROTEST HOME

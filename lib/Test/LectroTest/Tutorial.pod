@@ -45,12 +45,12 @@ down" (false) if it finds a needle:
   the_thing_we_are_testing($x, $c) >= 0;
 
 The above asserts for each point in the haystack that the output
-of C<the_thing_we_are_testing> must be non-negative.
+of the function C<the_thing_we_are_testing> must be non-negative.
 
-=head2 Put them together to get a Property
+=head2 Put them together to make a Property
 
 The generator bindings and needle recognizer are combined to make a
-Test::LectroTest::Property:
+property:
 
   Property {
     ##[ x <- Int, c <- Char( charset=>"A-Z" ) ]##
@@ -117,6 +117,23 @@ such examples.  The slides are available at the
 L<LectroTest Home|/"LECTROTEST HOME">.]
 
 
+=head1 SEE ALSO
+
+L<Test::LectroTest> gives a quick overview of automatic,
+specification-based testing with LectroTest.
+
+L<Test::LectroTest::Property> explains in detail what
+you can put inside of your property specifications.
+
+L<Test::LectroTest::Generator> describes the many generators
+and generator combinators that you can use to define the
+shapes of the haystacks you encounter during your testing
+adventures.
+
+L<Test::LectroTest::TestRunner> describes the objects that check your
+properties and tells you how to turn their control knobs.  You'll want
+to look here if you're interested in customizing the testing
+procedure.
 
 
 =head1 LECTROTEST HOME

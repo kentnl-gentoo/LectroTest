@@ -30,14 +30,15 @@ Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for 
 =head1 DESCRIPTION
 
 B<STOP!> If you just want to write and run simple tests, see
-Test::LectroTest.
+L<Test::LectroTest>.  If you really want to learn about or turn the
+control knobs of the property-checking apparatus, read on.
 
 This module provides Test::LectroTest::TestRunner, a class of objects
-that test properties by running repeated random trials.  You create
-a TestRunner, configure it, and then call its C<run> or C<run_suite>
+that tests properties by running repeated random trials.  You create a
+TestRunner, configure it, and then call its C<run> or C<run_suite>
 methods to test properties individually or in groups.
 
-=head2 METHODS
+=head1 METHODS
 
 The following methods are available.
 
@@ -64,9 +65,7 @@ for my $field (keys %defaults) {
 
 =pod
 
-=over 4
-
-=item new
+=head2 new(I<named-params>)
 
   my $runner = new Test::LectroTest::TestRunner(
     trials  => 1_000,
@@ -119,7 +118,7 @@ output is almost always what you want.
 =back
 
 You can also set and get the values of the configuration properties
-using accessors of the same name.
+using accessors of the same name.  For example:
 
   $runner->trials( 10_000 );
 
@@ -130,7 +129,7 @@ sub new { my $self = shift; my $class = ref($self) || $self; return
 
 =pod
 
-=item run
+=head2 run(I<property>)
 
   $results = $runner->run( $a_property );
   print $results->summary, "\n";
@@ -145,7 +144,7 @@ the check.
 
 The C<run> method takes an optional second argument which gives
 the test number.  If it is not provided (usually the case), the
-next number available from the test runner's internal counter is
+next number available from the TestRunner's internal counter is
 used.
 
   $results = $runner->run( $third_property, 3 );
@@ -164,50 +163,87 @@ sub run {
 
     # create a new results object to hold our results; run trials
 
-    my ($gen_specs, $testfn, $name) = @$test{qw/inputs test name/};
+    my ($inputs_list, $testfn, $name) = @$test{qw/inputs test name/};
     my $results = Test::LectroTest::TestRunner::results->new(
         name => $name, number => $number
     );
-    my @vars = sort keys %$gen_specs;
-    my $retries = 0;
+
+    # create an empty label store and start at attempts = 0
+
     my %labels;
-    my $base_size = 0;
-    for (1 .. $self->trials) {
-        $base_size++;
-        my $controller = Test::LectroTest::TestRunner::testcontroller->new();
-        my $size = $self->scalefn->($base_size);
-        my $inputs = { map {($_, $gen_specs->{$_}->generate($size))} @vars  };
-        my $success = eval { $testfn->($controller, @$inputs{@vars}) };
-        $results->exception( do { my $ex=$@; chomp $ex; $ex } ) if $@;
-        if ($controller->retried) {
-            $retries++;
-            if ($retries >= $self->retries) {
-                $results->incomplete("$retries retries exceeded");
-                $results->attempts( $_ );
+    my $attempts = 0;
+
+    # for each set of input-generators, run a series of trials
+
+    for my $gen_specs (@$inputs_list) {
+
+        my $retries = 0;
+        my $base_size = 0;
+        my @vars = sort keys %$gen_specs;
+        my $scalefn = $self->scalefn;
+
+        for (1 .. $self->trials) {
+
+            # run a trial
+
+            $base_size++;
+            my $controller=Test::LectroTest::TestRunner::testcontroller->new();
+            my $size = $scalefn->($base_size);
+            my $inputs = { "WARNING" => "EXCEPTION FROM WITHIN GENERATOR" };
+            my $success = eval {
+                $inputs = { map {($_, $gen_specs->{$_}->generate($size))}
+                            @vars };
+                $testfn->($controller, @$inputs{@vars});
+            }; 
+
+            # did the trial bail out owing to an exception?
+
+            $results->exception( do { my $ex=$@; chomp $ex; $ex } ) if $@;
+
+            # was it retried?
+
+            if ($controller->retried) {
+                $retries++;
+                if ($retries >= $self->retries) {
+                    $results->incomplete("$retries retries exceeded");
+                    $results->attempts( $attempts );
+                    return $results;
+                }
+                redo;  # re-run the trial w/ new inputs
+            }
+
+            # the trial ran to completation, so count the attempt
+
+            $attempts++;
+
+            # and count the trial toward the bin with matching labels
+
+            if ($controller->labels) {
+                local $" = " & ";
+                my @cl = sort @{$controller->labels};
+                $labels{"@cl"}++ if @cl;
+            }
+
+            # if the trial outcome was failure, return a counterexample
+
+            unless ( $success ) {
+                $results->counterexample_( $inputs );
+                $results->attempts( $attempts );
                 return $results;
             }
-            redo;
-        }
-        if ($controller->labels) {
-            local $" = " & ";
-            my @cl = sort @{$controller->labels};
-            $labels{"@cl"}++ if @cl;
-        }
-        unless ( $success ) {
-            $results->counterexample_( $inputs );
-            $results->attempts( $_ );
-            return $results;
+
+            # otherwise, loop up to the next trial
         }
     }
     $results->success(1);
-    $results->attempts( $self->trials );
+    $results->attempts( $attempts );
     $results->labels( \%labels );
     return $results;
 }
 
 =pod
 
-=item run_suite
+=head2 run_suite(I<properties>...)
 
   my $all_success = $runner->run_suite( @properties );
   if ($all_success) {
@@ -215,8 +251,8 @@ sub run {
   }
 
 Checks a suite of properties, sending the results of each
-property checked to STDOUT in a form that is compatible with
-Test::Harness.  For example:
+property checked to C<STDOUT> in a form that is compatible with
+L<Test::Harness>.  For example:
 
   1..5
   ok 1 - Property->new disallows use of 'tcon' in bindings
@@ -259,7 +295,14 @@ sub run_suite {
 
 =pod
 
-=back
+=head1 HELPER OBJECTS
+
+There are two kinds of objects that TestRunner uses as helpers.
+Neither is meant to be created by you.  Rather, a TestRunner
+will create them on your behalf when they are needed.
+
+The objects are described in the following subsections.
+
 
 =head2 Test::LectroTest::TestRunner::results
 
@@ -468,7 +511,7 @@ struct ( labels => '$', retried => '$' );
     }, ... ;
 
 
-Stops the current trial and tells the test runner to re-try it
+Stops the current trial and tells the TestRunner to re-try it
 with new inputs.  Typically used to reject a particular case
 of inputs that doesn't make for a good or valid test.
 
@@ -532,8 +575,10 @@ package Test::LectroTest::TestRunner;
 
 1;
 
+=head1 SEE ALSO
 
-
+L<Test::LectroTest::Property> explains in detail what
+you can put inside of your property specifications.
 
 =head1 LECTROTEST HOME
 
