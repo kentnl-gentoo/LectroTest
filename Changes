@@ -3,6 +3,13 @@
 LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
+* 0.20_05  Re-release of 0.20_04 to make CPAN happy (2004-09-13)
+
+- I once had a version in Test::LectroTest::Generator but removed it
+  because I wanted to version only the entire Test::LectroTest module.
+  But CPAN rejected Generator because its version had "fallen."  Crap.
+  So, back in goes the version number, now bumped.
+
 * 0.20_04  Documentation improvements, minor code improvements (2004-09-13)
 
 ** Fixes

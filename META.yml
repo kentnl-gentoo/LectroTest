@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Test-LectroTest
-version: 0.2004
+version: 0.2005
 author:
   - Tom Moertel (tom@moertel.com)
 abstract: Easy, automatic, specification-based tests

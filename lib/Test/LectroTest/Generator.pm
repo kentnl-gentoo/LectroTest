@@ -21,7 +21,7 @@ BEGIN {
 }
 
 our @EXPORT_OK;
-
+our $VERSION = 0.11;
 
 =head1 NAME
 
