@@ -7,7 +7,6 @@ use Carp;
 use Filter::Util::Call;
 
 use constant NO_FILTER => 'NO_FILTER';
-my $debugQ = 0;  # set to 1 to emit source-filter results on STDERR
 
 =head1 NAME
 
@@ -123,8 +122,7 @@ it with the necessary ingredients via named parameters:
 my $pkg = __PACKAGE__;
 
 sub new {
-    my $self   = shift;
-    my $class  = ref($self) || $self;
+    my $class = shift;
     croak "$pkg: invalid list of named parameters: (@_)"
         if @_ % 2;
     my %args  = @_;
@@ -387,11 +385,11 @@ sub make_code_filter {
                 # close of multi-line decl
                 $content = "";
             }
-            elsif ($content && s/(.*)/binding($1)/es) {
+            elsif ($content) {
+                s/(.*)/binding($1)/es;
                 $content .= " $1";
             }
         }
-        print STDERR if $debugQ;
         return $status;
     }
 }
@@ -450,7 +448,7 @@ Tom Moertel (tom@moertel.com)
 
 =head1 INSPIRATION
 
-The LectroTest project was inspired by Haskell's fabulous
+The LectroTest project was inspired by Haskell's
 QuickCheck module by Koen Claessen and John Hughes:
 http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 

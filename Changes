@@ -4,7 +4,39 @@ LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
 
-* 0.20_10   (2004-02-16)
+* 0.30   (2005-02-19)
+
+** Improvements
+
+- Full test coverage!  Devel::Coverage says that the LT unit tests now
+  cover 100% of statements, branches, conditionals, and subroutines.
+
+- Test::LectroTest now follows Test::Simple's exit-code strategy:
+  The number of failures (up to 254) is reported via the exit code.
+
+- (!) Test::LectroTest::TestRunner::run_suite now returns the number
+  of properties that successfully checked.  (Before it reported 0 if
+  any check failed.) !!!NOTE!!! This is an API change.  If you have
+  written code that checks the result of run_suite, you will need to
+  change it.
+
+** Fixes
+
+- An empty suite powered by Test::LectroTest now emits "1..0"
+  as its sole output when previously there was no output.
+
+** Misc
+
+- Added a bunch of new test cases. 
+
+- Renamed test files: from t/001.t to t/gens.t, etc.
+
+- Removed superfluous use of Data::Dumper in t/gens.t.
+
+- Relaxed dependencies on external packages need only for building.
+
+
+* 0.20_10   (2005-02-16)
 
 ** Improvements
 
@@ -16,7 +48,7 @@ Tom Moertel (tom@moertel.com)
 - Updated copyright notices.
 
 - Removed use of List::Util from t/001.t.  (This should be
-  the list use of the module.  Now we can cut the dependency.)
+  the last use of the module.  Now we can cut the dependency.)
 
 - Renamed the test .t files to something sensible.
 

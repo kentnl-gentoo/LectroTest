@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 220;
-use Data::Dumper;
+use Test::More tests => 248;
 
 BEGIN { use_ok( 'Test::LectroTest::Generator', qw(:common :combinators) ) }
 
@@ -199,6 +198,19 @@ for ([0..9],["a".."j"])
     complete_and_uniform_ok($g, "Elements(@$_)", $_);
 }
 
+=pod
+
+We must also test the pre-flight check.
+
+=cut
+
+like( eval { Elements() } || $@,
+      qr/must be.*at least one element/,
+      "pre-flight: Elements(<empty>) caught"
+);
+
+
+
 #==============================================================================
 
 =pod
@@ -299,6 +311,22 @@ for ( 'Float(range=>[0,0])' ) {
            'Test::LectroTest::Generator',
            "$_ is not wrongly caught as empty / "  );
 }
+
+=pod
+
+Sixth, we test the case where the generator is called
+without sizing guidance.  In this case the full range is
+used.
+
+=cut
+
+for (-3..3) {
+    my ($m,$n) = ($_ - 4, $_ + 4);
+    my $g = Sized { undef } Float(range=>[$m,$n]);
+    dist_mean_ok("Sized{undef} Float(range=>[$m,$n])",
+                 $g, [(undef)x$tsize], sub{$_[0]}, $_);
+}
+
 
 =pod
 
@@ -438,6 +466,22 @@ for ( 'Int(range=>[0,0])' ) {
            "$_ is not wrongly caught as empty / "  );
 }
 
+
+=pod
+
+Seventh, we test the case where the generator is called
+without sizing guidance.  In this case the full range is
+used.
+
+=cut
+
+for (-3..3) {
+    my ($m,$n) = ($_ - 5, $_ + 4);
+    my $g = Sized { undef } Int(range=>[$m,$n]);
+    complete_and_uniform_ok($g, "Sized{undef} Int(range=>[$m,$n])",[$m..$n]);
+}
+
+
 =pod
 
 Finally, we make sure that LectroTest prevents us from using a sized
@@ -458,6 +502,41 @@ for ( 'Int(range=>[-10,0])', 'Int(range=>[0,10])', 'Int' ) {
            'Test::LectroTest::Generator',
            "$_ is not wrongly caught as incompatible with sizing /"  );
 }
+
+
+#==============================================================================
+
+=pod
+
+=head2 Hash
+
+Hash is a thin wrapper around List and so we need only a few
+Hash-specific tests to get good coverage.
+
+=cut
+
+for( 'Unit(0),Unit(1)           {0=>1}',
+     'Int(range=>[0,5],sized=>0),Unit(1),length=>1000 {0=>1,1=>1,2=>1,3=>1,4=>1,5=>1}' )
+{
+    my ($hash_args, $expected) = split ' ', $_, 2;
+    my $gen_spec = "Hash($hash_args)";
+    is_deeply( (eval $gen_spec)->generate(1000), 
+               eval $expected,
+               "$gen_spec gens $expected");
+}
+
+=pod
+
+Still, we need to test the pre-flight checks.
+
+=cut
+
+like( eval { Hash(Int) } || $@,
+      qr/requires two/,
+      "pre-flight: Hash(Int) caught"
+);
+
+
 
 
 #==============================================================================
@@ -544,6 +623,40 @@ for (0..3) {
                  sub { scalar @{$_[0]} }, ($m+$n)/2 );
 }
 
+
+=pod
+
+Fifth, we check to see if List's pre-flight checks catch common
+problems.
+
+=cut
+
+like( eval { List(Int,length=>-1) } || $@,
+      qr/length.*< 0/,
+      "pre-flight: List(length=>-1) caught"
+);
+
+like( eval { List(Int,length=>[-1]) } || $@,
+      qr/length.*< 0/,
+      "pre-flight: List(length=>[-1,]) caught"
+);
+
+like( eval { List(Int,length=>[-1,0]) } || $@,
+      qr/length.*invalid/,
+      "pre-flight: List(length=>[-1,0]) caught"
+);
+
+like( eval { List(Int,length=>[1,0]) } || $@,
+      qr/length.*invalid/,
+      "pre-flight: List(length=>[1,0]) caught"
+);
+
+for ("[]", "[0,1,2]", "{1=>1}") {
+    like( eval "List(Int,length=>$_)" || $@,
+          qr/length spec.*bad/,
+          "pre-flight: List(length=>$_) caught"
+    );
+}
 
 
 #==============================================================================
@@ -700,6 +813,28 @@ for ('([[0,Unit("no")],[1,Unit("yes")]])',
     my @yesses = grep { $_ eq "yes" } map {$g->generate} 1..1000;
     is(scalar @yesses, 1000, "Frequency$_ generates only 'yes'");
 }
+
+=pod
+
+Third, we check to make sure the pre-flight checks catch bad arguments.
+
+=cut 
+
+like( eval { Frequency() } || $@,
+      qr/at least one frequency/,
+      "pre-flight: Frequency() caught"
+);
+
+like( eval { Frequency([0,Bool]) } || $@,
+      qr/at least one frequency.*greater than zero/,
+      "pre-flight: Frequency([0,Bool]) caught"
+);
+
+like( eval { Frequency([1,Bool],[-1,Bool]) } || $@,
+      qr/non-negative/,
+      "pre-flight: Frequency([1,Bool],[-1,Bool]) caught"
+);
+
 
 
 #==============================================================================

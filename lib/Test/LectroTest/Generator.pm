@@ -25,7 +25,7 @@ BEGIN {
 }
 
 our @EXPORT_OK;
-our $VERSION = 0.13;
+our $VERSION = 0.14;
 
 =head1 NAME
 
@@ -119,8 +119,7 @@ our %defaults = (
 # methods
 
 sub new {
-    my $self   = shift;
-    my $class  = ref($self) || $self;
+    my $class = shift;
     return bless { @_ }, $class;
 }
 
@@ -217,9 +216,10 @@ sub Int(@) {
         . "and cannot be used with a sized generator"
         if 0 < $rlo || 0 > $rhi;
     return Gen {
-        my ($size) = int($_[0]+0.5);
         my ($lo, $hi) = ($rlo, $rhi);
+        my $size = shift;
         if (defined $size) {
+            $size = int( $size + 0.5 );
             $lo = -$size if -$size > $lo;
             $hi =  $size if  $size < $hi;
         }
@@ -281,8 +281,8 @@ sub Float(@) {
         . "and cannot be used with a sized generator"
         if 0 < $rlo || 0 > $rhi;
     return Gen {
-        my ($size) = $_[0];
         my ($lo, $hi) = ($rlo, $rhi);
+        my $size = shift;
         if (defined $size) {
             $lo = -$size if -$size > $lo;
             $hi =  $size if  $size < $hi;
@@ -1151,7 +1151,7 @@ Tom Moertel (tom@moertel.com)
 
 =head1 INSPIRATION
 
-The LectroTest project was inspired by Haskell's fabulous
+The LectroTest project was inspired by Haskell's
 QuickCheck module by Koen Claessen and John Hughes:
 http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 

@@ -53,6 +53,11 @@ DESCRIPTION
     we bound to the generators earlier. LectroTest automagically loads these
     lexically bound Perl variables with values behind the scenes.)
 
+    Note: If you want to use test functions like "ok" from Test::Simple or
+    "is", "like", or "cmp_ok" from Test::More (and the related family of
+    Test::Builder-based testing modules), see Test::LectroTest::Compat,
+    which lets you mix and match LectroTest with these modules.
+
     Finally, we give the whole Property a name, in this case "my_function
     output is non-negative." It's a good idea to use a meaningful name
     because LectroTest refers to properties by name in its output.
@@ -72,6 +77,10 @@ DESCRIPTION
     example.) When you run the program, LectroTest will load the property
     (and any others in the file) and check it by running random trials
     against the software you're testing.
+
+    Note: If you want to place LectroTest property checks into a test plan
+    managed by Test::Builder-based modules such as Test::Simple or
+    Test::More, see Test::LectroTest::Compat.
 
     If LectroTest is able to "break" your software during the property
     check, it will emit a counterexample to your property's assertions and
@@ -93,10 +102,17 @@ DESCRIPTION
       # $x = -34
       # $y = 0
 
+EXIT CODE
+    The exit code returned by running a suite of property checks is the
+    number of failed checks. The code is 0 if all properties passed their
+    checks or *N* if *N* properties failed. (If more than 254 properties
+    failed, the exit code will be 254.)
+
 ADJUSTING THE TESTING PARAMETERS
-    There is one testing parameter that you may wish to change: The number
-    of trials to run against each property checked. By default it is 1,000.
-    If you want to try more or fewer trials, pass the "trials=>"*N* flag:
+    There is one testing parameter (among others) that you might wish to
+    change from time to time: the number of trials to run for each property
+    checked. By default it is 1,000. If you want to try more or fewer
+    trials, pass the "trials=>"*N* flag:
 
       use Test::LectroTest trials => 10_000;
 
@@ -116,6 +132,9 @@ SEE ALSO
     Also, the slides from my LectroTest talk for the Pittsburgh Perl Mongers
     make for a great introduction. Download a copy from the LectroTest home
     (see below).
+
+    Test::LectroTest::Compat lets you mix LectroTest with the popular family
+    of Test::Builder-based modules such as Test::Simple and Test::More.
 
     Test::LectroTest::Property explains in detail what you can put inside of
     your property specifications.
@@ -138,8 +157,8 @@ AUTHOR
     Tom Moertel (tom@moertel.com)
 
 INSPIRATION
-    The LectroTest project was inspired by Haskell's fabulous QuickCheck
-    module by Koen Claessen and John Hughes:
+    The LectroTest project was inspired by Haskell's QuickCheck module by
+    Koen Claessen and John Hughes:
     http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 COPYRIGHT and LICENSE

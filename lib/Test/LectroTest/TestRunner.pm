@@ -3,6 +3,8 @@ package Test::LectroTest::TestRunner;
 use strict;
 use warnings;
 
+use UNIVERSAL qw( isa );
+
 use Carp;
 use Data::Dumper;
 
@@ -24,8 +26,8 @@ Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for 
  print $result->details unless $result->success;
 
  # test a suite of properties, w/ Test::Harness output
- my $all_successful = $runner->run_suite( @properties );
- print "Splendid!" if $all_successful;
+ my $num_successful = $runner->run_suite( @properties );
+ print "Splendid!" if $num_successful;
 
 =head1 DESCRIPTION
 
@@ -125,8 +127,7 @@ using accessors of the same name.  For example:
 =cut
 
 sub new { 
-    my $self = shift;
-    my $class = ref($self) || $self;
+    my $class = shift;
     return bless { %defaults, @_ }, $class; 
 }
 
@@ -155,7 +156,7 @@ used.
 =cut
 
 sub run {
-    my ($self, $test, $number) = @_;
+    my ($self, $prop, $number) = @_;
 
     # if a test number wasn't provided, take the next from our counter
 
@@ -166,7 +167,7 @@ sub run {
 
     # create a new results object to hold our results; run trials
 
-    my ($inputs_list, $testfn, $name) = @$test{qw/inputs test name/};
+    my ($inputs_list, $testfn, $name) = @$prop{qw/inputs test name/};
     my $results = Test::LectroTest::TestRunner::results->new(
         name => $name, number => $number
     );
@@ -248,8 +249,8 @@ sub run {
 
 =head2 run_suite(I<properties>...)
 
-  my $all_success = $runner->run_suite( @properties );
-  if ($all_success) {
+  my $num_successful = $runner->run_suite( @properties );
+  if ($num_successful == @properties) {
       # celebrate most jubilantly!
   }
 
@@ -269,10 +270,13 @@ included in the output if the TestRunner's C<verbose> property is
 true.  You may override the default by passing the C<verbose> named
 parameter after all of the properties in the argument list:
 
-  my $all_success = $runner->run_suite( @properties,
-                                        verbose => 1 );
+  my $num_successes = $runner->run_suite( @properties,
+                                          verbose => 1 );
+  my $num_failed = @properties - $num_successes;
 
 =cut
+
+sub _prop($) { isa $_[0], "Test::LectroTest::Property" }
 
 sub run_suite {
     local $| = 1;
@@ -280,20 +284,20 @@ sub run_suite {
     my @tests;
     my @opts;
     while (@_) {
-        if (ref $_[0]) {  push @tests, shift;       }
-        else           {  push @opts, shift, shift; }
+        if (_prop $_[0]) {  push @tests, shift;       }
+        else             {  push @opts, shift, shift; }
     }
     my %opts = (verbose => $self->verbose, @opts);
     my $verbose = $opts{verbose};
-    $self->number(1);  # reset test-number count
-    my $success = 1;   # assume success
+    $self->number(1);    # reset test-number count
+    my $successful = 0;  # reset success count
     print "1..", scalar @tests, "\n";
     for (@tests) {
         my $results = $self->run($_);
         print $verbose ? $results->details : $results->summary ."\n";
-        $success &&= $results->success;
+        $successful += $results->success ? 1 : 0;
     }
-    return $success;
+    return $successful;
 }
 
 =pod
@@ -439,7 +443,7 @@ sub summary {
     my $self = shift;
     my ($name, $attempts) = ($self->name, $self->attempts);
     my $incomplete = $self->incomplete;
-    my $number = $self->number || 1;
+    my $number = $self->number;
     local $" = " / ";
     return $self->success
         ? "ok $number - '$name' ($attempts attempts)"
@@ -481,9 +485,9 @@ sub counterexample {
     my $vars = $self->counterexample_;
     return "" unless $vars;  # no counterexample
     my $sorted_keys = [ sort keys %$vars ];
-    my $dd = Data::Dumper->new([@$vars{@$sorted_keys}], $sorted_keys);
-    $dd->Sortkeys(1) if $dd->can("Sortkeys");
-    return $dd->Dump;
+    no warnings 'once';
+    local $Data::Dumper::Sortkeys = 1;
+    return Data::Dumper->new([@$vars{@$sorted_keys}], $sorted_keys)->Dump;
 }
 
 =pod 
@@ -598,7 +602,7 @@ Tom Moertel (tom@moertel.com)
 
 =head1 INSPIRATION
 
-The LectroTest project was inspired by Haskell's fabulous
+The LectroTest project was inspired by Haskell's
 QuickCheck module by Koen Claessen and John Hughes:
 http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 

@@ -10,6 +10,7 @@ WriteMakefile
                            'Test::More' => 0,
                            'Filter::Util::Call' => 0,
                            'Test::Builder' => 0,
+                           'File::Temp' => 0,
                            'Data::Dumper' => 0,
                            'Class::Struct' => 0,
                            'Carp' => 0
