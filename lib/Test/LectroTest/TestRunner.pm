@@ -90,13 +90,13 @@ The default is 1_000.
 
 The number of times to allow a property to retry trials (via
 C<$tcon-E<gt>retry>) during the entire property check before aborting
-the check.  This is used primary to prevent infinite looping, should
+the check.  This is used to prevent infinite looping, should
 the property retry every attempt.
 
 =item scalefn
 
-A subroutine that scales the sizing guidance given by the TestRunner
-to the input generators.
+A subroutine that scales the sizing guidance given to input
+generators.
 
 The TestRunner starts with an initial guidance of 1 at the beginning
 of a property check.  For each trial (or retry) of the property, the
@@ -334,8 +334,8 @@ Returns all relevant information about the property-check outcome as a
 series of lines.  The last line is terminated with a newline.  The
 details are identical to the summary (except for the terminating
 newline) unless label frequencies are present or a counterexample is
-present, in which case the details will have these extras and the
-summary will not.  Example:
+present, in which case the details will have these extras (the
+summary does not).  Example:
 
   1..1
   not ok 1 - 'my_sqrt meets defn of sqrt' falsified in 1 attempts
@@ -411,7 +411,8 @@ In the event that the series of trials was halted before it was
 completed (such as when the retry count was exhausted), this method will
 return the reason.  Otherwise, it returns an empty string.
 
-Note that a series of trials I<is> complete if a counterexample is found.
+Note that a series of trials I<is> complete if a counterexample was
+found.
 
 =back
 
@@ -478,7 +479,7 @@ sub counterexample {
     return "" unless $vars;  # no counterexample
     my $sorted_keys = [ sort keys %$vars ];
     my $dd = Data::Dumper->new([@$vars{@$sorted_keys}], $sorted_keys);
-    $dd->Sortkeys(1);
+    $dd->Sortkeys(1) if $dd->can("Sortkeys");
     return $dd->Dump;
 }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 216;
+use Test::More tests => 220;
 use Data::Dumper;
 use List::Util qw( max );
 
@@ -716,6 +716,25 @@ and thus should always generate "a-b-c-d-e-f".
        "Paste w/ glue as expected");
 }
 
+=pod
+
+We also test to see that Paste handles Lists properly.  It should
+concatenate the elements of all Lists and then paste them together
+with the other arguments.
+
+=cut
+
+{
+    my $lgen0 = List( Unit(1), length=>0 );
+    my $lgen4 = List( Unit(1), length=>4 );
+    is(Paste($lgen0)->generate(5), "", "Paste([empty]) => empty str");
+    is(Paste($lgen4)->generate(5), "1111",
+       "Paste([1,1,1,1]) => '1111'");
+    is(Paste(Unit(0),$lgen0,Unit(2))->generate(5), "02",
+       "Paste(0,[],2) => '02'");
+    is(Paste(Unit(0),$lgen4,Unit(2))->generate(5), "011112",
+       "Paste(0,[1,1,1,1],2) => '011112'");
+}
 
 #==============================================================================
 

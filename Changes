@@ -4,6 +4,22 @@ LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
 
+* 0.20_08   (2005-02-05)
+
+** Improvements
+
+- Paste can now be used to join elements of generated lists.
+
+- Removed dependency upon Data::Dumper's Sortkeys method and
+  upon List::Util entirely.  This makes LectroTest compatible with
+  older versions of Perl.  (I tested on v5.6.1 built for i386-linux.)
+  Thanks Alex Kapranoff for the Sortkeys dependency report.
+
+** Fixes
+
+- Minor clarifying edits to documentation.
+
+
 * 0.20_07   (2004-09-30)
 
 ** Improvements

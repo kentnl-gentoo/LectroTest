@@ -4,7 +4,7 @@ my $build = Module::Build->new
   license            => "perl",
   create_makefile_pl => "traditional",
   create_readme      => 1,
-  requires           => { Test::More => 0, Filter::Util::Call => 0 },
+  requires           => { Test::More => 0, Filter::Util::Call => 0 }
 );
 
 $build->create_build_script;

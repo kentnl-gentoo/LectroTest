@@ -23,9 +23,9 @@ Test::LectroTest::Property - Specifications of properties that your software mus
 
  my $prop_non_neg = Property {
      ##[ x <- Int, y <- Int ]##
-     $t->label("negative") if $x < 0;
-     $t->label("odd")      if $x % 2;
-     $t->retry             if $y == 0;  # 0 can't be used in test
+     $tcon->label("negative") if $x < 0;
+     $tcon->label("odd")      if $x % 2;
+     $tcon->retry             if $y == 0;  # 0 can't be used in test
      my_function_to_test( $x, $y ) >= 0;
  }, name => "my_function_to_test output is non-negative";
 

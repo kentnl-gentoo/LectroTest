@@ -2,9 +2,16 @@
 
 X = Done
 
+* Development stuff
+
+- Rename tests from 00x.t to something more meaningful
+- Remove DataDumper Sortkeys dependency (more backward compatible)
+
 * Improvements
 
-- Multiple generator-bindings per Property to allow for
+- Make Paste combinator accept List arguments (via concat).
+
+X Multiple generator-bindings per Property to allow for
   focusing on certain subpaces of the haystack:
     ##[ [ x <- Int ], [ x <- Int(range=>[-1,1]) ]##
   - all bindings must have identical sets of variables

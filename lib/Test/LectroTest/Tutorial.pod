@@ -39,7 +39,7 @@ we can search for needles.
 
 The "needle recognizer" is defined by a snippet of code that uses the
 bound variables to inspect a given point in the haystack.  It returns
-a "thumbs up" (true) if the point is free of needles and a "thumbs
+a "thumbs up" (true) if the point is free of needles or a "thumbs
 down" (false) if it finds a needle:
 
   the_thing_we_are_testing($x, $c) >= 0;
