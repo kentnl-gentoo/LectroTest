@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 155;
+use Test::More tests => 216;
 use Data::Dumper;
 use List::Util qw( max );
 
@@ -52,7 +52,7 @@ my $tsize = 10_000;
 #==============================================================================
 #==============================================================================
 
-=head1 Basic tests
+=head1 Fundamental tests
 
 Here we sanity check that the fundamental object types can be created
 and that they have the right base class.
@@ -61,15 +61,17 @@ and that they have the right base class.
 
 
 for (qw/Int Bool Float Char String List Elements(1) Unit(1)
-        Paste OneOf(Unit(0))/,
+        Paste OneOf(Unit(0)) Each Map{} Concat Flatten
+        ConcatMap{} FlattenMap{} /,
      'Hash(Unit(1),Unit(1))', 'Frequency([1,"a"])', 'Sized{1}Unit(0)') {
-    my $g = eval $_;
+    my $g = eval $_ or die $@;
     ok(defined $g, "$_ constructor returns something");
     ok($g->isa('Test::LectroTest::Generator'),
        "$_ ctor returns a Test::LectroTest::Generator");
 }
 
 sub all { $_ || return 0 for @_; 1 }  # courtesy of List::Util
+
 
 #==============================================================================
 #==============================================================================
@@ -96,6 +98,8 @@ Here we test the generators.  We perform the following tests.
 
 #==============================================================================
 
+=pod
+
 =head2 Bool
 
 The Bool distribution is really an Int distribution over the
@@ -106,6 +110,8 @@ range [0,1].  Therefore, we make sure that it has a mean of 0.5.
 dist_mean_ok("Bool", Bool, [1..$tsize], sub{$_[0]}, 0.5);
 
 #==============================================================================
+
+=pod 
 
 =head2 Char
 
@@ -170,6 +176,8 @@ for ( ["a"        ,"a"           ],
 
 #==============================================================================
 
+=pod 
+
 =head2 Elements and OneOf
 
 The Elements tests indirectly test OneOf, upon which the Elements
@@ -185,6 +193,8 @@ for ([0..9],["a".."j"])
 }
 
 #==============================================================================
+
+=pod
 
 =head2 Float
 
@@ -249,7 +259,7 @@ for (1..5) {
 
 =pod
 
-Finally, we run a series of unsized tests over 3-element ranges near
+Fourth, we run a series of unsized tests over 3-element ranges near
 zero.  Because the ranges are so small, we expect that if there were
 off-by-one errors in the code, they would stand out here.
 
@@ -262,9 +272,52 @@ for (-3..3) {
                  [0..$tsize],sub{$_[0]}, $_);
 }
 
+=pod
+
+Fifth, we make sure that LectroTest prevents us from providing an
+empty range.
+
+=cut
+
+for ( 'Float(range=>[1,0])', 'Float(range=>[0,-1])'  ) {
+
+    like( eval $_ || $@,
+          qr/is empty/,
+          "$_ is caught as an empty range"  );
+}
+
+for ( 'Float(range=>[0,0])' ) {
+
+    isa_ok( eval $_,
+           'Test::LectroTest::Generator',
+           "$_ is not wrongly caught as empty / "  );
+}
+
+=pod
+
+Finally, we make sure that LectroTest prevents us from using a sized
+generator with a given range that does not contain zero.
+
+=cut
+
+for ( 'Float(range=>[-10,-1])', 'Float(range=>[1,10])'  ) {
+
+    like( eval $_ || $@,
+          qr/does not contain zero/,
+          "$_ is caught as incompatible with sizing"  );
+}
+
+for ( 'Float(range=>[-10,0])', 'Float(range=>[0,10])', 'Float' ) {
+
+    isa_ok( eval $_,
+           'Test::LectroTest::Generator',
+           "$_ is not wrongly caught as incompatible with sizing /"  );
+}
 
 #==============================================================================
 #==============================================================================
+
+=pod
 
 =head2 Int
 
@@ -344,7 +397,7 @@ for (1..5) {
 
 =pod
 
-Finally, we run a series of unsized tests over 3-element ranges near
+Fifth, we run a series of unsized tests over 3-element ranges near
 zero.  Because the ranges are so small, we expect that if there were
 off-by-one errors in the code, they would stand out here.
 
@@ -357,8 +410,52 @@ for (-3..3) {
                  [0..$tsize],sub{$_[0]}, $_);
 }
 
+=pod
+
+Sixth, we make sure that LectroTest prevents us from providing an
+empty range.
+
+=cut
+
+for ( 'Int(range=>[1,0])', 'Int(range=>[0,-1])'  ) {
+
+    like( eval $_ || $@,
+          qr/is empty/,
+          "$_ is caught as an empty range"  );
+}
+
+for ( 'Int(range=>[0,0])' ) {
+
+    isa_ok( eval $_,
+           'Test::LectroTest::Generator',
+           "$_ is not wrongly caught as empty / "  );
+}
+
+=pod
+
+Finally, we make sure that LectroTest prevents us from using a sized
+generator with a given range that does not contain zero.
+
+=cut
+
+for ( 'Int(range=>[-10,-1])', 'Int(range=>[1,10])'  ) {
+
+    like( eval $_ || $@,
+          qr/does not contain zero/,
+          "$_ is caught as incompatible with sizing"  );
+}
+
+for ( 'Int(range=>[-10,0])', 'Int(range=>[0,10])', 'Int' ) {
+
+    isa_ok( eval $_,
+           'Test::LectroTest::Generator',
+           "$_ is not wrongly caught as incompatible with sizing /"  );
+}
+
 
 #==============================================================================
+
+=pod
 
 =head2 List
 
@@ -443,6 +540,8 @@ for (0..3) {
 
 
 #==============================================================================
+
+=pod
 
 =head2 String
 
@@ -531,6 +630,8 @@ for (0..3) {
 
 #==============================================================================
 
+=pod
+
 =head2 Unit
 
 The Unit generator is simple and always returns the same value.
@@ -596,6 +697,8 @@ for ('([[0,Unit("no")],[1,Unit("yes")]])',
 
 #==============================================================================
 
+=pod
+
 =head2 Paste
 
 To test the Paste generator, we create six Unit generators that
@@ -615,6 +718,8 @@ and thus should always generate "a-b-c-d-e-f".
 
 
 #==============================================================================
+
+=pod
 
 =head2 Sized
 
@@ -657,8 +762,183 @@ should be equal to (-1 + 100) / 4.
 }
 
 
+#==============================================================================
+
+=pod
+
+=head2 Each
+
+The Each combinator is just a wrapper around List, so the tests
+for it are simple.
+
+=cut
+
+for ( 'Each(Unit(1),Unit(2),Unit(3))' )
+{
+    my $g = eval $_;
+    is_deeply( $g->generate(1), [1,2,3],
+               "$_ generates [1,2,3]" );
+    
+}
 
 #==============================================================================
+
+=pod
+
+=head2 Apply
+
+Apply, in turn, is built upon Each, so we just make sure that
+it gets its own additional functionality right.
+
+=cut
+
+for ( 'Apply(sub{join"/",@_},Unit(1),Unit(2),Unit(3))' )
+{
+    my $g = eval $_;
+    is( $g->generate(1), "1/2/3", "$_ generates 1/2/3" );
+    
+}
+
+#==============================================================================
+
+=pod
+
+=head2 Map
+
+Map is also built upon Each.  Again, we just make sure it
+adds the correct twist.
+
+=cut
+
+for ( ['(Map {"x" x $_[0]} Unit(1),Unit(2))', '["x","xx"]'] )
+{
+    my ($gstr, $expected) = @$_;
+    my $g = eval $gstr || die $@;
+    is_deeply( $g->generate(1), eval $expected, "$gstr generates $expected" );
+}
+
+#==============================================================================
+
+=pod
+
+=head2 Concat
+
+Testing Concat is straightforward.  We just feed it a few
+list generators and make sure it returns the right thing.
+
+=cut
+
+for ( ['Concat', '[]']
+    , ['Concat(List(Int,length=>0))', '[]']
+    , ['Concat(Unit("a"))', '["a"]']
+    , ['Concat(Unit("a"),List(Int,length=>0))', '["a"]']
+    , ['Concat(List(Int,length=>0))', '[]']
+    , ['Concat(List(Unit([1]),length=>1))', '[[1]]']
+    , ['Concat(List(Unit(1),length=>2))', '[1,1]']
+    , ['Concat(List(Unit(1),length=>2),List(Unit([2]),length=>1))'
+      ,'[1,1,[2]]']
+     )
+{
+    my ($gstr, $expected) = @$_;
+    my $g = eval $gstr || die $@;
+    is_deeply( $g->generate(1), eval $expected, "$gstr generates $expected" );
+}
+
+
+=cut
+
+#==============================================================================
+
+=pod
+
+=head2 Flatten
+
+Testing Flatten is like Concat, except here we must make sure
+that the resulting list does not contain any other lists.
+
+=cut
+
+for ( ['Flatten', '[]']
+    , ['Flatten(Unit([[[[[[[]]]]]]]))', '[]']
+    , ['Flatten(Unit("a"))', '["a"]']
+    , ['Flatten(Unit("a"),List(Int,length=>0))', '["a"]']
+    , ['Flatten(List(Int,length=>0))', '[]']
+    , ['Flatten(List(Unit([9]),length=>1))', '[9]']
+    , ['Flatten(List(Unit(9),length=>2))', '[9,9]']
+    , ['Flatten(List(Unit(9),length=>2),List(Unit([2]),length=>1))'
+      ,'[9,9,2]']
+     )
+{
+    my ($gstr, $expected) = @$_;
+    my $g = eval $gstr || die $@;
+    is_deeply( $g->generate(1), eval $expected, "$gstr generates $expected" );
+}
+
+
+=cut
+
+
+#==============================================================================
+
+=pod
+
+=head2 ConcatMap
+
+Testing ConcatMap is like testing Concat and Map together.  (Who
+would have guessed?)
+
+=cut
+
+for ( ['ConcatMap{}', '[]']
+    , ['ConcatMap{1}Unit(2)', '[1]']
+    , ['ConcatMap{[1]}Unit(2)', '[1]']
+    , ['ConcatMap{[@_]}Each(Unit(2),Unit(3))', '[[2,3]]']
+    , ['ConcatMap{[@_]}Unit(2),Unit(3)', '[2,3]']
+    , ['ConcatMap{my($a)=@_;$a%2?[$a]:[]}Unit(1),Unit(2),Unit(3)', '[1,3]']
+    )
+{
+    my ($gstr, $expected) = @$_;
+    my $g = eval $gstr || die $@;
+    is_deeply( $g->generate(1), eval $expected, "$gstr generates $expected" );
+}
+
+
+#==============================================================================
+
+=pod
+
+=head2 FlattenMap
+
+Can you see where this is going?  FlattenMap is just like Flatten
+and Map, together as best friends.
+
+=cut
+
+for ( ['FlattenMap{}', '[]']
+    , ['FlattenMap{9}Unit(2)', '[9]']
+    , ['FlattenMap{[8]}Unit(2)', '[8]']
+    , ['FlattenMap{[[7]]}Unit(2)', '[7]']
+    , ['FlattenMap{[@_]}Each(Unit(2),Unit(3))', '[2,3]']
+    , ['FlattenMap{[@_]}Unit(2),Unit([3])', '[2,3]']
+    , ['FlattenMap{[[[[[9]]]]]}Unit(2),Unit([3])', '[9,9]']
+    , ['FlattenMap{my($a)=@_;$a%2?[$a]:[]}Unit(9),Unit(2),Unit(3)', '[9,3]']
+    )
+{
+    my ($gstr, $expected) = @$_;
+    my $g = eval $gstr || die $@;
+    is_deeply( $g->generate(1), eval $expected, "$gstr generates $expected" );
+}
+
+
+
+
+=cut
+
+
+#==============================================================================
+#==============================================================================
+#==============================================================================
+# More helpers
 
 =head1 Helper functions
 
@@ -686,6 +966,8 @@ sub sample_distribution_z_score {
     return $z_score;
 }
 
+=pod
+
 =head2 dist_mean_ok
 
 This function is used to determine if the mean of 
@@ -708,6 +990,8 @@ sub dist_mean_ok {
     cmp_ok(abs($z), '<', 3.89,  # w/in 99.99% confidence interval
        sprintf "$name dist mean is $expected_mean (z-score = %.2f)", $z);
 }
+
+=pod
 
 =head2 complete_and_uniform_ok
 

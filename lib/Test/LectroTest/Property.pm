@@ -111,7 +111,8 @@ it with the necessary ingredients via named parameters:
 
   my $prop2 = Test::LectroTest::Property->new(
       inputs => [ x => Int ],
-      test   => sub { my ($tcon,$x) = @_; thing_to_test($x) >= 0 },
+      test   => sub { my ($tcon,$x) = @_;
+                      thing_to_test($x) >= 0 },
       name   => "thing_to_test is non-negative"
   );
 
@@ -177,7 +178,7 @@ or
   ]##
 
 Further, for better integration with syntax-highlighting IDEs,
-the terminating C<]##> delimiter may be preceded with a hash
+the terminating C<]##> delimiter may be preceded by a hash
 symbol C<#> and optional whitespace to make it appear like
 a comment:
 
@@ -202,10 +203,10 @@ The behavior test is a subroutine that accepts a test-controller
 object and a given set of input conditions, tests your software's
 observed behavior with respect to the input conditions against the
 required behavior, and returns true or false to indicate acceptance or
-rejection.  If you are using the C<Property>-function method to create
+rejection.  If you are using the C<Property> function to create
 your property objects, lexical variables are declared and loaded
 automatically per your input-generator specification, so you
-can just use them immediately:
+can just use the variables immediately:
 
   my $prop = Property {
     ##[ i <- Int, delta <- Float(range=>[0,1]) ]##
@@ -217,7 +218,7 @@ can just use them immediately:
 On the other hand, if you are using
 C<Test::LectroTest::Property-E<gt>new()>, you must declare and
 initialize these variables manually from Perl's C<@_> variable I<in
-lexically increasing order> after receiving C<$tcon>, the test
+lexicographically increasing order> after receiving C<$tcon>, the test
 controller object.  (This inconvenience, by the way, is why the former
 method is preferred.)  The hard way:
 

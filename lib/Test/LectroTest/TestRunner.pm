@@ -90,8 +90,8 @@ The default is 1_000.
 =item retries
 
 The number of times to allow a property to retry trials (via
-C<$tcon->retry>) during the entire property check before aborting the
-check.  This is used primary to prevent infinite looping, should
+C<$tcon-E<gt>retry>) during the entire property check before aborting
+the check.  This is used primary to prevent infinite looping, should
 the property retry every attempt.
 
 =item scalefn
@@ -102,10 +102,11 @@ to the input generators.
 The TestRunner starts with an initial guidance of 1 at the beginning
 of a property check.  For each trial (or retry) of the property, the
 guidance value is incremented.  This causes successive trials to be
-tried using successively larger inputs.  The C<scalefn> subroutine
-gets to adjust this guidance on the way to the input generators.
-Typically, you would change the C<scalefn> subroutine if you wanted to
-change the rate and which inputs grow during the course of the trials.
+tried using successively more complex inputs.  The C<scalefn>
+subroutine gets to adjust this guidance on the way to the input
+generators.  Typically, you would change the C<scalefn> subroutine if
+you wanted to change the rate and which inputs grow during the course
+of the trials.
 
 =item verbose
 
@@ -119,6 +120,8 @@ output is almost always what you want.
 
 You can also set and get the values of the configuration properties
 using accessors of the same name.
+
+  $runner->trials( 10_000 );
 
 =cut
 
@@ -150,7 +153,6 @@ used.
 =cut
 
 sub run {
-    local $" = " & ";
     my ($self, $test, $number) = @_;
 
     # if a test number wasn't provided, take the next from our counter
@@ -187,6 +189,7 @@ sub run {
             redo;
         }
         if ($controller->labels) {
+            local $" = " & ";
             my @cl = sort @{$controller->labels};
             $labels{"@cl"}++ if @cl;
         }
@@ -223,8 +226,12 @@ Test::Harness.  For example:
   ok 5 - pre-flight check catches unbalanced arguments list
 
 By default, labeling statistics and counterexamples (if any) are
-included in the output.  You may turn them off by passing
-C<verbose=E<gt>0> after all of the properties in the argument list.
+included in the output if the TestRunner's C<verbose> property is
+true.  You may override the default by passing the C<verbose> named
+parameter after all of the properties in the argument list:
+
+  my $all_success = $runner->run_suite( @properties,
+                                        verbose => 1 );
 
 =cut
 
@@ -261,7 +268,7 @@ sub run_suite {
   print $results->success ? "Winner!" : "Loser!";
 
 This is the object that you get back from C<run>.  It contains all of
-the information available about the outcome of the property check
+the information available about the outcome of a property check
 and provides the following methods:
 
 =over 4
@@ -283,8 +290,9 @@ end with a newline.  Example:
 Returns all relevant information about the property-check outcome as a
 series of lines.  The last line is terminated with a newline.  The
 details are identical to the summary (except for the terminating
-newline) unless label frequencies are present or a counterexample
-is present.  Example:
+newline) unless label frequencies are present or a counterexample is
+present, in which case the details will have these extras and the
+summary will not.  Example:
 
   1..1
   not ok 1 - 'my_sqrt meets defn of sqrt' falsified in 1 attempts
@@ -306,13 +314,13 @@ there is one.  Otherwise, returns an empty string.
 
 =item labels
 
-Label counts.  If any labels were applied, this value will be
-a reference to a hash mapping each combination of labels to the
-count of trials that had that particular combination.  Otherwise,
-it will be undefined.
+Label counts.  If any labels were applied to trails during the
+property check, this value will be a reference to a hash mapping each
+combination of labels to the count of trials that had that particular
+combination.  Otherwise, it will be undefined.
 
 Note that each trial is counted only once -- for the I<most-specific>
-combination of labels that are applied to it.  For example, consider
+combination of labels that were applied to it.  For example, consider
 the following labeling logic:
 
   Property {
@@ -345,8 +353,10 @@ If no labels were applied, an empty string is returned.
 
 =item exception
 
-Returns the text of the exception that caused the test series to be
-aborted, if there is one.  Otherwise, returns an empty string.
+Returns the text of the exception or error that caused the series of
+trials to be aborted, if the trials were aborted because an exception
+or error was intercepted by LectroTest.  Otherwise, returns an empty
+string.
 
 =item attempts
 

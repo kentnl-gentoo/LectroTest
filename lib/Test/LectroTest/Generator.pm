@@ -14,14 +14,19 @@ BEGIN {
     @ISA         = qw(Exporter);
     @EXPORT      = ();
     @EXPORT_OK   = qw(&Gen &Int &Bool &Char &String &List &Hash &Float
-                      &Unit &Elements &Paste &OneOf &Frequency &Sized);
+                      &Unit &Elements &Paste &OneOf &Frequency &Sized
+                      &Each &Apply &Map &Concat &Flatten &ConcatMap
+                      &FlattenMap);
     %EXPORT_TAGS = (common => [qw(&Int &Bool &Char &String &List &Hash
-                                  &Float &Elements &Unit)],
-                    combinators => [qw(&Paste &OneOf &Frequency &Sized)]);
+                                  &Float &Elements &Unit &Apply &Map
+                                  &Concat &Flatten &ConcatMap
+                                  &FlattenMap)],
+                    combinators => [qw(&Paste &OneOf &Frequency &Sized
+                                       &Each)]);
 }
 
 our @EXPORT_OK;
-our $VERSION = 0.11;
+our $VERSION = 0.12;
 
 =head1 NAME
 
@@ -76,11 +81,23 @@ more-complex generators by combining simple ones.
 
 A generator is an object having a method C<generate>, which takes a
 single argument, I<size> and returns a new random value.  The
-generator interprets the I<size> argument as guidance about the
-complexity of the value it should create.  Typically, smaller I<size>
-values result in smaller generated numbers and shorter generated
-strings and lists.  Some generators ignore sizing guidance or can be
-told to ignore it via the B<sized> modifier.
+generated value is always a scalar.  Generators that produce data
+structures return references to them.
+
+=head2 SIZING GUIDANCE
+
+The C<generate> method interprets its I<size> argument as guidance
+about the complexity of the value it should create.  Typically,
+smaller I<size> values result in smaller generated numbers and shorter
+generated strings and lists.  Some generators, for which sizing
+doesn't make sense, ignore sizing guidance altogether; those that do
+use sizing guidance can be told to ignore it via the B<sized>
+modifier.
+
+The purpose of sizing is to allow LectroTest to generate simple values
+at first and then, as testing progresses, to slowly ramp up the
+complexity.  In this way, counterexamples for obvious problems
+will be easier for you to understand.  
 
 =cut
 
@@ -110,7 +127,7 @@ sub new {
 
 sub generate($) {
     my ($self, $size) = @_;
-    return $self->{generator}->($size);
+    return scalar $self->{generator}->($size);
 }
 
 #==============================================================================
@@ -161,6 +178,15 @@ inclusive, but this can be changed via the optional B<range> modifier.
 Causes the generated values to be constrained to the range [I<low>,
 I<high>], inclusive.  By default, the range is [-32768, 32767].
 
+B<Note:> If your range is empty (i.e., I<low> E<gt> I<high>),
+LectroTest will complain.
+
+B<Note:> If zero is not within the range you provide, sizing makes no
+sense because the intersection of your range and the sizing range can
+be empty, and thus you must turn off sizing with C<sized=E<gt>0>.
+If you forget, LectroTest will complain.
+
+
 =item Int( sized=>I<bool> )
 
 If true (the default), constrains the absolute value of the generated
@@ -185,6 +211,9 @@ sub Int(@) {
         };
     }
     # otherwise, provide a sizing-capable generator
+    croak "the given range=>[$rlo,$rhi] does not contain zero "
+        . "and cannot be used with a sized generator"
+        if 0 < $rlo || 0 > $rhi;
     return Gen {
         my ($size) = int($_[0]+0.5);
         my ($lo, $hi) = ($rlo, $rhi);
@@ -215,6 +244,15 @@ I<high>).  By default, the range is [-32768.0,32768.0).  (Note that
 the I<high> value itself can never be generated, but values
 infinitesimally close to it can.)
 
+
+B<Note:> If your range is empty (i.e., I<low> E<gt> I<high>),
+LectroTest will complain.
+
+B<Note:> If zero is not within the range you provide, sizing makes no
+sense because the intersection of your range and the sizing range can
+be empty, and thus you must turn off sizing with C<sized=E<gt>0>.
+If you forget, LectroTest will complain.
+
 =item Float( sized=>I<bool> )
 
 If true (the default), constrains the absolute value of the generated
@@ -237,6 +275,9 @@ sub Float(@) {
         };
     }
     # otherwise, provide a sizing-capable generator
+    croak "the given range [$rlo,$rhi] does not contain zero "
+        . "and cannot be used with a sized generator"
+        if 0 < $rlo || 0 > $rhi;
     return Gen {
         my ($size) = $_[0];
         my ($lo, $hi) = ($rlo, $rhi);
@@ -279,7 +320,7 @@ with the B<charset> modifier:
 
 Characters will be drawn from the character set given by the
 character-set specification I<cset>.  The syntax of I<cset> is
-similar the Perl C<tr> builtin and is a string comprised of
+similar the Perl C<tr> built-in and is a string comprised of
 characters and character ranges:
 
 =over 4
@@ -414,7 +455,7 @@ sub List(@) {
     }
     # case 1: length=>N
     if ( ! ref($lenspec) ) {
-        my $n = shift;
+        my $n = $lenspec;
         croak "length=>$n can't be < 0" if $n < 0;
         return Gen {
             return $builder->($lenspec, @_);
@@ -582,7 +623,8 @@ generators from simpler ones.
 =item Paste(I<gens>..., glue=>I<str>)
 
     my $gen = Paste( (String(charset=>"0-9",length=>4)) x 4,
-                     glue => " " );   # make credit-card numbers
+                     glue => " " );
+    # gens credit-card numbers like "4592 9459 9023 1369"
 
 Creates a combined generator that generates values by joining the
 values generated by each of the supplied sub-generators I<gens>.  The
@@ -609,6 +651,7 @@ sub Paste(@) {
 =item OneOf(I<gens>...)
 
     my $gen = OneOf( Unit(0), List(Int,length=>3) );
+    # generates scalar 0 or a 3-element list of integers
 
 Creates a combined generator that generates each value by selecting at
 random (with equal probability) one of the sub-generators in I<gens>
@@ -637,6 +680,9 @@ sub OneOf(@) {
     my $gen = Frequency( [50, Unit("common"     )],
                          [35, Unit("less common")],
                          [15, Unit("uncommon"   )] );
+    # generates one of "common", "less common", or
+    # "uncommon" with respective probabilities
+    # 50%, 35%, and 15%.
 
 Creates a combined generator that generates each value by selecting at
 random one of the generators I<gen1> or I<gen2> or ... and using that
@@ -679,9 +725,239 @@ sub Frequency(@) {
 
 =pod
 
+=item Each(I<gens>...)
+
+    my $gen = Each( Unit(1), Unit("X") );
+    # always generates [ 1, "X" ]
+
+Creates a generator that returns a list (array ref) whose
+successive elements are the successive values generated
+by the given generators I<gens>.
+
+The sizing guidance given to the combined generator will be passed
+unchanged to each sub-generator.
+
+B<Note:> This combinator does not accept modifiers.
+
+(Note for technical buffs: C<Each(...)> is exactly equivalent to
+C<List(..., length=E<gt>1>).
+
+=cut
+
+sub Each(@) {
+    return List( @_, length=>1 );
+}
+
+
+=pod
+
+=item Apply(I<fn>, I<gens>...)
+
+    my $gen = Apply( sub { $_[0] x $_[1] }
+                   , Unit("X"), Unit(4) );
+    # always generates "XXXX"
+
+Creates a generator that applies the given function I<fn> to arguments
+generated from each of the given sub-generators I<gens> and returns
+the resulting value.  Each sub-generator contributes one value, and
+the values are passed to I<fn> as arguments in the same order as the
+sub-generators were given to Apply.
+
+The sizing guidance given to the combined generator will be passed
+unchanged to each sub-generator.
+
+B<Note:> The function I<fn> is always evaluated in scalar context.
+If you need to generate an array, return it as an array reference.
+
+B<Note:> This combinator does not accept modifiers.
+
+
+=cut
+
+sub Apply(&@) {
+    my $f = shift;
+    my $g = Each( @_ );
+    return Gen {
+        scalar $f->( @{$g->generate(@_)} )
+    };
+}
+
+=pod
+
+=item Map(I<fn>, I<gens>...)
+
+    my $gen = Map( sub { "X" x $_[0] }
+                 , Unit(4), Unit(3), Unit(0) );
+    # always generates [ "XXXX", "XXX", "" ]
+
+Creates a generator that applies the given function I<fn> to the
+values generated by the given generators I<gen> one at a time and
+returns a list (array ref) whose elements are each of the successive
+results.
+
+The sizing guidance given to the combined generator will be passed
+unchanged to each sub-generator.
+
+B<Note:> The function I<fn> is always evaluated in scalar context.
+If you need to generate an array, return it as an array reference.
+
+B<Note:> This combinator does not accept modifiers.
+
+=cut
+
+sub Map_ {
+    my $f = shift;
+    my $g = Each( @_ );
+    return Gen {
+        [ map { scalar $f->($_) } @{ $g->generate(@_) } ]
+    };
+}
+
+sub Map(&@) {
+    Map_(@_);
+}
+
+=pod
+
+=item Concat(I<gens>...)
+
+    my $gen = Concat( List( Unit(1),   length=>3 )
+                    , List( Unit("x"), length=>1 ) );
+    # always generates [1, 1, 1, "x"]
+
+Creates a generator that concatenates the values generated by each of
+its sub-generators, resulting in a list (which is returned as a array
+reference).  The values returned by the sub-generators are expected to
+be lists (array refs).  If a sub-generator returns a scalar value, it
+will be treated like a single-element list that contains the value.
+
+The sizing guidance given to the combined generator will be passed
+unchanged to each sub-generator.
+
+B<Note:> If a sub-generator returns something other than a list or
+scalar, you will get a run-time error.
+
+B<Note:> This combinator does not accept modifiers.
+
+=cut
+
+# we'll use this helper in Flatten and ConcatMap
+
+sub concat(@) {
+    [ map { ref($_) ? @{$_} : ($_) } @_ ];
+}
+
+sub Concat(@) {
+    Apply( \&concat, @_ );
+}
+
+
+=pod
+
+=item Flatten(I<gens>...)
+
+    my $gen = Flatten( Unit( [[[[[[ 1 ]]]]]] ) );
+    # generates [1]
+
+Flatten is just like Concat except that it recursively flattens any
+sublists generated by the generators I<gen> and then concatenates them
+to generate a final a list of depth one, regardless of the depth
+of any sublists.
+
+The sizing guidance given to the combined generator will be passed
+unchanged to each sub-generator.
+
+B<Note:> If a sub-generator returns something other than a list or
+scalar, you will get a run-time error.
+
+B<Note:> This combinator does not accept modifiers.
+
+=cut
+
+sub flatten(@) {
+    concat map { ref($_) ? flatten(@$_) : ($_) } @_ ;
+}
+
+sub Flatten(@) {
+    Apply( \&flatten, @_ );
+}
+
+=pod
+
+=item ConcatMap(I<fn>, I<gens>)
+
+    sub take_odds { my $x = shift;
+                    $x % 2 ? [$x] : [] }
+    my $gen = ConcatMap( \&take_odds
+                       , Unit(1), Unit(2), Unit(3) );
+    # generates [1, 3]
+
+Creates a generator that applies the function I<fn> to each of the
+values generated by the given generators I<gen> in turn, and then
+concatenates the results.
+
+The sizing guidance given to the combined generator will be passed
+unchanged to each sub-generator.
+
+B<Note:> The function I<fn> is always evaluated in scalar context.
+If you need to generate an array, return it as an array reference.
+
+B<Note:> If a sub-generator returns something other than a list or
+scalar, you will get a run-time error.
+
+B<Note:> This combinator does not accept modifiers.
+
+=cut
+
+sub ConcatMap(&@) {
+    my $g = Map_( @_ );
+    return Gen {
+        concat @{ $g->generate( @_ ) };
+    };
+}
+
+
+=pod
+
+=item FlattenMap(I<fn>, I<gens>)
+
+    my $gen = FlattenMap( sub { [ ($_[0]) x 3 ] }
+                        , Unit([1]), Unit([[2]]) );
+    # generates [1, 1, 1, 2, 2, 2]
+
+Creates a generator that applies the function I<fn> to each of the
+values generated by the given generators I<gen> in turn, and then
+concatenates the results.
+
+The sizing guidance given to the combined generator will be passed
+unchanged to each sub-generator.
+
+B<Note:> The function I<fn> is always evaluated in scalar context.
+If you need to generate an array, return it as an array reference.
+
+B<Note:> If a sub-generator returns something other than a list or
+scalar, you will get a run-time error.
+
+B<Note:> This combinator does not accept modifiers.
+
+=cut
+
+sub FlattenMap(&@) {
+    my $g = Map_( @_ );
+    return Gen {
+        flatten @{ $g->generate( @_ ) };
+    };
+}
+
+
+=pod
+
 =item Sized(I<BLOCK>, I<gen>)
 
-    my $gen = Sized { 2 * $_[0] + 3 } List(Int);
+    my $gen = Sized { 2 * $_[0] } List(Int);
+        # ^ magnify sizing guidance by factor of two
+    my $gen2 = Sized { 10 } Int;
+        # ^ use constant guidance of 10
 
 Creates a generator that adjusts sizing guidance by passing
 it through the function given in I<BLOCK> and then calls the
@@ -728,8 +1004,14 @@ is built on top of an Int generator:
   # Sun Sep 11 15:39:44 2016
   # Fri Dec 26 00:39:31 1975
 
-(Note: C<Gen> is not imported into your module's namespace by default.
-If you want to use it, you must ask for it by name.)
+Alternatively, we could build the generator using the Apply
+combinator:
+
+  my $ctime_gen2 = Apply { localtime $_[0] } $time_gen;
+
+
+B<Note:> C<Gen> is not imported into your module's namespace by default.
+If you want to use it, you must ask for it by name.
 
 =cut
 

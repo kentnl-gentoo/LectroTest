@@ -8,7 +8,7 @@ use Filter::Util::Call;
 require Test::LectroTest::Property;
 require Test::LectroTest::Generator;
 
-our $VERSION = 0.20_05;
+our $VERSION = 0.20_06;
 
 =head1 NAME 
 
@@ -39,7 +39,7 @@ of your software.  LectroTest then checks your software see whether
 those properties hold.
 
 You declare properties using the C<Property> function, which takes a
-block of code and promotes it to a Test::LectroTest::Property:
+block of code and promotes it to a L<Test::LectroTest::Property>:
 
     Property {
         ##[ x <- Int, y <- Int ]##
@@ -52,9 +52,10 @@ declaration.  For example:
         ##[  x <- Int, y <- Int  ]##
 
 (Note the special bracketing, which is required.)  This particular
-binding says, "For all integers I<x> and I<y>."  (See
-Test::LectroTest::Generator for the passel of generators that
-are at your disposal.)
+binding says, "For all integers I<x> and I<y>."  (By the way, you
+aren't limited to integers.  LectroTest also gives you booleans,
+strings, lists, hashes, and more, and it lets you define your own
+generator types.  See L<Test::LectroTest::Generator> for more.)
 
 The second part of the block is simply a snippet of code that makes
 use of the variables we bound earlier to test whether a property holds

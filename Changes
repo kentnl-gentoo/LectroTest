@@ -3,12 +3,41 @@
 LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
+* 0.20_06  New combinators, doc fixes (2004-09-__)
+
+** Improvements
+
+- More new combinators that you can shake a stick at: 
+  Each, Apply, Map, Concat, Flatten, ConcatMap, FlattenMap.
+
+- As usual, documentation tweaks:
+  - Better explanation of sizing guidance (Generator)
+  - Added warnings about empty ranges, etc. (Generator)
+  - Documented the new combinators (Generator)
+
+- Additional pre-flight checks for Int and Float generators:
+  If a range is provided that does not contain zero, LectroTest
+  will complain if the generator is also sized (because the
+  run-time intersection of the sizing-guidance range and the
+  generator's range can be empty, making it impossible to
+  generate a valid value).
+
+
+** Fixes
+
+- Fixed an overly-uppity pre-flight check for List(length=>N).
+
+- Fixed TestRunner's modifying of $" in a way that escaped into the
+  behavior-test part of Properties during checks.
+
+
 * 0.20_05  Re-release of 0.20_04 to make CPAN happy (2004-09-13)
 
 - I once had a version in Test::LectroTest::Generator but removed it
   because I wanted to version only the entire Test::LectroTest module.
   But CPAN rejected Generator because its version had "fallen."  Crap.
   So, back in goes the version number, now bumped.
+
 
 * 0.20_04  Documentation improvements, minor code improvements (2004-09-13)
 

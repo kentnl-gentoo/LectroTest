@@ -37,9 +37,10 @@ DESCRIPTION
             ##[  x <- Int, y <- Int  ]##
 
     (Note the special bracketing, which is required.) This particular
-    binding says, "For all integers *x* and *y*." (See
-    Test::LectroTest::Generator for the passel of generators that are at
-    your disposal.)
+    binding says, "For all integers *x* and *y*." (By the way, you aren't
+    limited to integers. LectroTest also gives you booleans, strings, lists,
+    hashes, and more, and it lets you define your own generator types. See
+    Test::LectroTest::Generator for more.)
 
     The second part of the block is simply a snippet of code that makes use
     of the variables we bound earlier to test whether a property holds for

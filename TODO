@@ -11,25 +11,35 @@ X = Done
   - test runner runs a full set of trials against each binding
 
 X Better handling of errors caught durring testing
-  - Include "Error caught: $@" in output.
+  X Include "Error caught: $@" in output.
 
 X Combinators
   X Size
-  - Each -- Impl: List of length 1 w/ multiple generators
-  - Apply(f,gs...) -- returns f(@{Each(gs)})
-  - Concat(gs) = Apply(map {@$_ $_}, @{Each(gs)})
-  - Flatten(gs)
+  X Each -- Impl: List of length 1 w/ multiple generators
+  X Apply(f,gs...) -- returns f(@{Each(gs)})
+  X Concat(gs) = Apply(map {@$_ $_}, @{Each(gs)})
+  X Map(f, gs...)
+  X ConcatMap
+  X Flatten(gs)
 
 - Test apparatus
   X label & friends
   X output & reporting
   X integrate w/ Test::Harness
   - Seed for repeatable tests
+  - Flight recorder -- record everything to file
+  - allow and report multiple test failures -- maybe separate pkg?
+  - Allow behavior tests to add notes to a trial; include
+    the notes in details.
 
 - Docs
-  - TestRunner
-  - Property
+  X TestRunner
+  X Property
   - Tutorial 
+  - Topics
+    - When not to use LectroTest
+    - Using LectroTest with Test::More and ilk
+
 - Repeatability
   - Emit the RNG seed at the outset of the tests for repeatability
   - Accept an option to use a given seed
