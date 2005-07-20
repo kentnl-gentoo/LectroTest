@@ -8,7 +8,7 @@ use Filter::Util::Call;
 require Test::LectroTest::Property;
 require Test::LectroTest::Generator;
 
-our $VERSION = "0.3200";
+our $VERSION = "0.3300";
 
 =head1 NAME 
 
@@ -176,8 +176,10 @@ sub run {
 }
 
 END {
-    my $failed = Test::LectroTest::run();
-    $? = $failed > 254 ? 254 : $failed;
+    if ($r) {
+        my $failed = Test::LectroTest::run();
+        $? = $failed > 254 ? 254 : $failed;
+    }
 }
 
 1;

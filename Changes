@@ -3,6 +3,19 @@
 LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
+* 0.3300   (2005-07-20)
+
+** Fixes
+
+- Test::LectroTest can now be listed as a dependency in an
+  ExtUtils::MakeMaker Makefile.PL.  (Thanks Steffen Müller)
+
+** Misc
+
+- Minor documentation tweaks for clarity.
+
+- Minor code clean ups.
+
 
 * 0.3200   (2005-03-03)
 
