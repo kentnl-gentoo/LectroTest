@@ -8,7 +8,7 @@ use Filter::Util::Call;
 require Test::LectroTest::Property;
 require Test::LectroTest::Generator;
 
-our $VERSION = "0.3300";
+our $VERSION = "0.3400";
 
 =head1 NAME 
 
@@ -163,7 +163,7 @@ sub import {
     @opts = @_;
     $r = Test::LectroTest::TestRunner->new( @_ );
     my $lines = 0;
-    my $subfilter = Test::LectroTest::Property::make_code_filter();
+    my $subfilter = Test::LectroTest::Property::_make_code_filter();
     filter_add( sub {
         my $status = filter_read();
         s{^(?=Test|Property)\b}{push \@Test::LectroTest::props, };
@@ -171,13 +171,13 @@ sub import {
     });
 }
 
-sub run {
+sub _run {
     return @props - $r->run_suite( @props, @opts );
 }
 
 END {
     if ($r) {
-        my $failed = Test::LectroTest::run();
+        my $failed = Test::LectroTest::_run();
         $? = $failed > 254 ? 254 : $failed;
     }
 }
