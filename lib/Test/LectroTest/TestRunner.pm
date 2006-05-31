@@ -9,10 +9,12 @@ use Carp;
 use Data::Dumper;
 
 use Test::LectroTest::Property qw( NO_FILTER );
+use Test::LectroTest::FailureRecorder;
+use Test::LectroTest::Generator qw( Unit );
 
 =head1 NAME
 
-Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for running LectroTest property checks
+Test::LectroTest::TestRunner - Configurable TAP-compatible engine for running LectroTest property checks
 
 =head1 SYNOPSIS
 
@@ -25,18 +27,18 @@ Test::LectroTest::TestRunner - Configurable Test::Harness-compatible engine for 
  my $result = $runner->run( $a_single_lectrotest_property );
  print $result->details unless $result->success;
 
- # test a suite of properties, w/ Test::Harness output
+ # test a suite of properties, w/ Test::Harness::TAP output
  my $num_successful = $runner->run_suite( @properties );
- print "Splendid!" if $num_successful;
+ print "All passed!" if $num_successful == @properties;
 
 =head1 DESCRIPTION
 
 B<STOP!> If you just want to write and run simple tests, see
-L<Test::LectroTest>.  If you really want to learn about or turn the
-control knobs of the property-checking apparatus, read on.
+L<Test::LectroTest>.  If you really want to learn about the
+property-checking apparatus or turn its control knobs, read on.
 
 This module provides Test::LectroTest::TestRunner, a class of objects
-that tests properties by running repeated random trials.  You create a
+that tests properties by running repeated random trials.  Create a
 TestRunner, configure it, and then call its C<run> or C<run_suite>
 methods to test properties individually or in groups.
 
@@ -46,11 +48,14 @@ The following methods are available.
 
 =cut
 
-our %defaults = ( trials  =>  1_000,
-                  retries => 20_000,
-                  scalefn => sub { $_[0] / 2 + 1 },
-                  number  => 1,
-                  verbose => 1
+our %defaults = (
+    trials            =>  1_000,
+    retries           => 20_000,
+    scalefn           => sub { $_[0] / 2 + 1 },
+    number            => 1,
+    verbose           => 1,
+    record_failures   => undef,
+    playback_failures => undef,
 );
 
 # build field accessors
@@ -64,16 +69,22 @@ for my $field (keys %defaults) {
     };
 }
 
+sub regressions {
+    my ($self, $value) = @_;
+    $self->record_failures($value);
+    $self->playback_failures($value);
+}
 
 =pod
 
 =head2 new(I<named-params>)
 
   my $runner = new Test::LectroTest::TestRunner(
-    trials  => 1_000,
-    retries => 20_000,
-    scalefn => sub { $_[0] / 2 + 1 },
-    verbose => 1
+    trials      => 1_000,
+    retries     => 20_000,
+    scalefn     => sub { $_[0] / 2 + 1 },
+    verbose     => 1,
+    regressions => "/path/to/regression_suite.txt",
   );
 
 Creates a new Test::LectroTest::TestRunner and configures it with the
@@ -111,11 +122,40 @@ of the trials.
 
 =item verbose
 
-If true (the default) the TestRunner will use verbose output that
-includes things like label frequencies and counterexamples.  Otherwise,
-only one-line summaries will be output.  Unless you have a good
-reason to do otherwise, leave this parameter alone because verbose
-output is almost always what you want.
+If this paramter is set to true (the default) the TestRunner will use
+verbose output that includes things like label frequencies and
+counterexamples.  Otherwise, only one-line summaries will be output.
+Unless you have a good reason to do otherwise, leave this parameter
+alone because verbose output is almost always what you want.
+
+=item record_failures
+
+If this parameter is set to a file's pathname (or a FailureRecorder
+object), the TestRunner will record property-check failures to the
+file (or recorder).  (This is an easy way to build a
+regression-testing suite.)  If the file cannot be created or
+written to, this parameter will be ignored.  Set this parameter to
+C<undef> (the default) to turn off recording.
+
+=item playback_failures
+
+If this parameter is set to a file's pathname (or a FailureRecorder
+object), the TestRunner will load previously recorded failures from
+the file (or recorder) and use them as I<additional> test cases when
+checking properties.  If the file cannot be read, this option will be
+ignored.  Set this parameter to C<undef> (the default) to turn off
+recording.
+
+=item regressions
+
+If this parameter is set to a file's pathname (or a FailureRecorder
+object), the TestRunner will load failures from and record failures to
+the file (or recorder).  Setting this parameter is a shortcut for, and
+exactly equivalent to, setting I<record_failures> and
+<playback_failures> to the same value, which is typically what you
+want when managing a persistent suite of regression tests.
+
+This is a write-only accessor.
 
 =back
 
@@ -126,9 +166,13 @@ using accessors of the same name.  For example:
 
 =cut
 
-sub new { 
+sub new {
     my $class = shift;
-    return bless { %defaults, @_ }, $class; 
+    my $self = bless { %defaults, @_ }, $class;
+    if (defined(my $val = delete $self->{regressions})) {
+        $self->regressions($val);
+    }
+    return $self;
 }
 
 =pod
@@ -153,6 +197,14 @@ used.
 
   $results = $runner->run( $third_property, 3 );
 
+Additionally, if the TestRunner's I<playback_failures> parameter is
+defined, this method will play back any relevant failure cases from
+the given playback file (or FailureRecorder).
+
+Additionally, if the TestRunner's I<record_failures> parameter is
+defined, this method will record any new failures to the given file
+(or FailureRecorder).
+
 =cut
 
 sub run {
@@ -176,31 +228,45 @@ sub run {
 
     my %labels;
     my $attempts = 0;
+    my $in_regressions = 1;
 
     # for each set of input-generators, run a series of trials
 
-    for my $gen_specs (@$inputs_list) {
+    for my $gen_specs (@{$self->_regression_generators($name)},
+                       undef,  # separator
+                       @$inputs_list) {
+
+        # an undef value separates the regression-test generators (if
+        # any) from the property's own generators; we use it to turn
+        # on failure recording after the regression-test generators
+        # have all been used.  (we don't record failures during
+        # regression testing because they have already been recorded)
+
+        if (!defined($gen_specs)) {
+            $in_regressions = 0;
+            next;
+        }
 
         my $retries = 0;
         my $base_size = 0;
         my @vars = sort keys %$gen_specs;
         my $scalefn = $self->scalefn;
 
-        for (1 .. $self->trials) {
+        for (1 .. ($in_regressions ? 1 : $self->trials)) {
 
             # run a trial
 
             $base_size++;
-            my $controller=Test::LectroTest::TestRunner::testcontroller->new();
+            my $controller=Test::LectroTest::TestRunner::testcontroller->new;
             my $size = $scalefn->($base_size);
             my $inputs = { "WARNING" => "EXCEPTION FROM WITHIN GENERATOR" };
             my $success = eval {
                 $inputs = { map {($_, $gen_specs->{$_}->generate($size))}
                             @vars };
                 $testfn->($controller, @$inputs{@vars});
-            }; 
+            };
 
-            # did the trial bail out owing to an exception?
+            # did the trial bail out because of an exception?
 
             $results->exception( do { my $ex=$@; chomp $ex; $ex } ) if $@;
 
@@ -216,7 +282,7 @@ sub run {
                 redo;  # re-run the trial w/ new inputs
             }
 
-            # the trial ran to completation, so count the attempt
+            # the trial ran to completion, so count the attempt
 
             $attempts++;
 
@@ -234,17 +300,73 @@ sub run {
                 $results->counterexample_( $inputs );
                 $results->notes_( $controller->notes );
                 $results->attempts( $attempts );
+                $self->_record_regression( $name, $inputs )
+                    unless $in_regressions;
                 return $results;
             }
 
             # otherwise, loop up to the next trial
         }
     }
+
     $results->success(1);
     $results->attempts( $attempts );
     $results->labels( \%labels );
     return $results;
 }
+
+sub _recorder_for_writes {
+    shift->_get_recorder('record_failures');
+}
+
+sub _recorder_for_reads {
+    shift->_get_recorder('playback_failures');
+}
+
+sub _get_recorder {
+    my ($self, $attr) = @_;
+    my $val = $self->{$attr};
+    if ($val && ! ref $val) {
+        $val = $self->{$attr} = Test::LectroTest::FailureRecorder->new($val);
+    }
+    return $val;
+}
+
+sub _regression_generators {
+
+    my ($self, $prop_name) = @_;
+
+    # if we get an error reading failures from the recorder, ignore it
+    # because if we're building a new regression suite, there may not
+    # even be a failure-recording file yet
+
+    my $failures = eval {
+        $self->_recorder_for_reads->get_failures_for_property($prop_name);
+    } || [];
+
+    my @gens;
+
+    for my $inputs (@$failures) {
+
+        # convert the failure case's inputs into a set of generator
+        # bindings that will generate the failure case
+
+        my %gen_bindings;
+        $gen_bindings{$_} = Unit($inputs->{$_}) for keys %$inputs;
+        push @gens, \%gen_bindings;
+    }
+
+    return \@gens;
+}
+
+sub _record_regression {
+    my ($self, $name, $inputs) = @_;
+    eval {
+        $self->_recorder_for_writes # may be undef
+             ->record_failure_for_property($name, $inputs);
+    };
+}
+
 
 =pod
 
@@ -257,7 +379,7 @@ sub run {
 
 Checks a suite of properties, sending the results of each
 property checked to C<STDOUT> in a form that is compatible with
-L<Test::Harness>.  For example:
+L<Test::Harness::TAP>.  For example:
 
   1..5
   ok 1 - Property->new disallows use of 'tcon' in bindings
@@ -372,7 +494,7 @@ combination of labels to the count of trials that had that particular
 combination.  Otherwise, it will be undefined.
 
 Note that each trial is counted only once -- for the I<most-specific>
-combination of labels that were applied to it.  For example, consider
+combination of labels that was applied to it.  For example, consider
 the following labeling logic:
 
   Property {
@@ -380,7 +502,7 @@ the following labeling logic:
     $tcon->label("negative") if $x < 0;
     $tcon->label("odd")      if $x % 2;
     1;
-  }, name => "negative/odd";
+  }, name => "negative/odd labeling example";
 
 For a particular trial, if I<x> was 2 (positive and even), the trial
 would receive no labels.  If I<x> was 3 (positive and odd), the trial
@@ -401,7 +523,7 @@ The corresponding output looks like this:
   25% negative & odd
   25% odd
 
-If no labels were applied, an empty string is returned.  
+If no labels were applied, an empty string is returned.
 
 =item exception
 
@@ -468,7 +590,7 @@ sub details {
         local $Data::Dumper::Terse = 1;
         $details .= "Caught exception: " . Dumper($ex);
     }
-    $details =~ s/^/\# /mg if $details;  # mark as Test::Harness comments
+    $details =~ s/^/\# /mg if $details;  # mark as TAP comments
     return "$summary$details";
 }
 
@@ -501,7 +623,7 @@ sub notes {
     return $notes ? join("\n", "Notes:", @$notes, "") : "";
 }
 
-=pod 
+=pod
 
 =head2 Test::LectroTest::TestRunner::testcontroller
 
@@ -526,7 +648,7 @@ struct ( labels => '$', retried => '$', notes => '$' );
 
     Property {
       ##[ x <- Int ]##
-      return $tcon->retry if $x == 0; 
+      return $tcon->retry if $x == 0;
     }, ... ;
 
 
@@ -555,8 +677,8 @@ sub retry {
 
     Property {
       ##[ x <- Int ]##
-      $tcon->label("negative") if $x < 0; 
-      $tcon->label("odd")      if $x % 2; 
+      $tcon->label("negative") if $x < 0;
+      $tcon->label("odd")      if $x % 2;
     }, ... ;
 
 Applies a label to the current trial.  At the end of the trial, all of
@@ -580,13 +702,13 @@ sub label {
 
     Property {
       ##[ x <- Int ]##
-      $tcon->trivial if $x == 0; 
+      $tcon->trivial if $x == 0;
     }, ... ;
 
 Applies the label "trivial" to the current trial.  It is identical to
 calling C<label> with "trivial" as the argument.
 
-=cut 
+=cut
 
 sub trivial {
     shift->label("trivial");
@@ -689,22 +811,33 @@ package Test::LectroTest::TestRunner;
 
 1;
 
+
 =head1 SEE ALSO
 
 L<Test::LectroTest::Property> explains in detail what
 you can put inside of your property specifications.
 
+L<Test::LectroTest::RegressionTesting> explains how to test for
+regressions and corner cases using LectroTest.
+
+L<Test::Harness:TAP> documents the Test Anything Protocol,
+Perl's simple text-based interface between testing modules such
+as L<Test::LectroTest> and the test harness L<Test::Harness>.
+
+
 =head1 LECTROTEST HOME
 
-The LectroTest home is 
+The LectroTest home is
 http://community.moertel.com/LectroTest.
 There you will find more documentation, presentations, mailing-list archives, a wiki,
 and other helpful LectroTest-related resources.  It's also the
 best place to ask questions.
 
+
 =head1 AUTHOR
 
 Tom Moertel (tom@moertel.com)
+
 
 =head1 INSPIRATION
 
@@ -712,9 +845,10 @@ The LectroTest project was inspired by Haskell's
 QuickCheck module by Koen Claessen and John Hughes:
 http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
+
 =head1 COPYRIGHT and LICENSE
 
-Copyright (c) 2004-05 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004-06 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

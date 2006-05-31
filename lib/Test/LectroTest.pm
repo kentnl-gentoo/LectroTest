@@ -8,7 +8,7 @@ use Filter::Util::Call;
 require Test::LectroTest::Property;
 require Test::LectroTest::Generator;
 
-our $VERSION = "0.3400";
+our $VERSION = "0.3500";
 
 =head1 NAME 
 
@@ -34,11 +34,11 @@ Test::LectroTest - Easy, automatic, specification-based tests
 
 This module provides a simple (yet full featured) interface to
 LectroTest, an automated, specification-based testing system for Perl.
-To use it, you declare properties that specify the expected behavior
+To use it, declare properties that specify the expected behavior
 of your software.  LectroTest then checks your software to see whether
 those properties hold.
 
-You declare properties using the C<Property> function, which takes a
+Declare properties using the C<Property> function, which takes a
 block of code and promotes it to a L<Test::LectroTest::Property>:
 
     Property {
@@ -137,6 +137,29 @@ fewer trials, pass the C<trials=E<gt>>I<N> flag:
   use Test::LectroTest trials => 10_000;
 
 
+=head1 TESTING FOR REGRESSIONS AND CORNER CASES
+
+LectroTest can record failure-causing test cases to a file, and it can
+play those test cases back as part of its normal testing strategy.
+The easiest way to take advantage of this feature is to set the
+I<regressions> parameter when you C<use> this module:
+
+    use Test::LectroTest
+        regressions => "regressions.txt";
+
+This tells LectroTest to use the file "regressions.txt" for both
+recording and playing back failures.  If you want to record and
+play back from separate files, or want only to record I<or> play
+back, use the I<record_failures> and/or
+I<playback_failures> options:
+
+    use Test::LectroTest
+        playback_failures => "regression_suite_for_my_module.txt",
+        record_failures   => "failures_in_the_field.txt";
+
+See L<Test::LectroTest::RegressionTesting> for more.
+
+
 =head1 CAVEATS
 
 When you use this module, it imports all of the generator-building
@@ -158,8 +181,7 @@ our @opts;
 sub import {
     my $self = shift;
     Test::LectroTest::Property->export_to_level(1, $self);
-    Test::LectroTest::Generator->export_to_level(
-        1, $self, qw(:all) );
+    Test::LectroTest::Generator->export_to_level(1, $self, ':all');
     @opts = @_;
     $r = Test::LectroTest::TestRunner->new( @_ );
     my $lines = 0;
@@ -193,6 +215,9 @@ For a gentle introduction to LectroTest, see
 L<Test::LectroTest::Tutorial>.  Also, the slides from my LectroTest
 talk for the Pittsburgh Perl Mongers make for a great introduction.
 Download a copy from the LectroTest home (see below).
+
+L<Test::LectroTest::RegressionTesting> explains how to test for
+regressions and corner cases using LectroTest.
 
 L<Test::LectroTest::Compat> lets you mix LectroTest with the
 popular family of L<Test::Builder>-based modules such as

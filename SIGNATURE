@@ -1,0 +1,52 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.54.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 eb697e619836ac49873e9ceeaa0c7c608d38c4f6 Build.PL
+SHA1 dd83309b7612992e4b2da59880b9d146585cf748 Changes
+SHA1 a9e1714231353b9e9e40656d77cb853a0726c534 MANIFEST
+SHA1 3f446b2fcf274107bea0696f1dba7c7c14d1e256 MANIFEST.SKIP
+SHA1 336082abf0ee576fe104b3b428f6c1b37cc167b7 META.yml
+SHA1 21ab22772edfa3e89b03df2433fc80a1b0ee7b33 Makefile.PL
+SHA1 740fb5b4ef3f6fd81c62bc027608cabdd6baadd0 README
+SHA1 621075dc81b60824411229e123216834bca5901c THANKS
+SHA1 0b45a5611e78086acaef1eaaf659b48a098f7082 TODO
+SHA1 9c3e344088694689e3808fbc55e328fc81fc69e4 lib/Test/LectroTest.pm
+SHA1 da6a85f4eaa1ddd3864e25bfe362cbd5e6d8b67b lib/Test/LectroTest/Compat.pm
+SHA1 2163b1e3e4c9fa3d073a783ecc7e4824f0c466ff lib/Test/LectroTest/FailureRecorder.pm
+SHA1 ebe080dcef5c907dc09e5eac557fc9f9c8120a58 lib/Test/LectroTest/Generator.pm
+SHA1 5841aac52692b3f98587b373939f9d82e3200ef8 lib/Test/LectroTest/Property.pm
+SHA1 6673a509779c0aa41179465d4c014714cd7e65fa lib/Test/LectroTest/RegressionTesting.pod
+SHA1 54f175d4f9a2725e195af0357bca3f30ae7b106c lib/Test/LectroTest/TestRunner.pm
+SHA1 ff8d15ea43055326337f68318a6db3b823aac288 lib/Test/LectroTest/Tutorial.pod
+SHA1 0df84e3c7b459ff06044d09e3a89c1938d04d9b3 t/0-signature.t
+SHA1 66419c4cc7b180070cfd7ae64cd6cabec57c5e20 t/compat.t
+SHA1 63da3667f8cade9ba1e45d3d1954f8a8f31a7004 t/docs-eg.t
+SHA1 9479c8b81b7edcd5a1d907b0cccceb76ddb025cd t/gens.t
+SHA1 d08042d3e56c7b6ffa2145a4730cb9a0bd3fd7bc t/harness.t
+SHA1 fe7f23cd5c11f1e8f1e4829dc3efa18cadc719e5 t/lib/CaptureOutput.pm
+SHA1 acd2dbc49ebac0f1cc8087ba0627e217941c9432 t/pod-coverage.t
+SHA1 bcc6dbf7f11d5891d621f2bb4f497483cc16e2a3 t/pod.t
+SHA1 56819a1e7a2b7058a96b9c979650d227703af283 t/props.t
+SHA1 1aa8cf0e0674840d4ccf86735aeb566fa6555fc1 t/props2.t
+SHA1 c104d2406d8451d7cc4ac1731aadb13000df6cc4 t/recorder.t
+SHA1 b813942d94f0f1e80b9eda9729e2b5eb506269f1 t/runner.t
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.3 (GNU/Linux)
+
+iD8DBQFEffV+Qc6yqgdmpFURAjylAJ0fx8iFWrGMo0/dA3/Ij9SgfZNd2ACg7dZz
+nI00voNKZu0Jr1EJ5LeJJbY=
+=VeuJ
+-----END PGP SIGNATURE-----

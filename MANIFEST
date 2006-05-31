@@ -1,6 +1,7 @@
 Build.PL
 Changes
 MANIFEST			This list of files
+MANIFEST.SKIP
 META.yml
 Makefile.PL
 README
@@ -8,11 +9,14 @@ THANKS
 TODO
 lib/Test/LectroTest.pm
 lib/Test/LectroTest/Compat.pm
+lib/Test/LectroTest/FailureRecorder.pm
 lib/Test/LectroTest/Generator.pm
 lib/Test/LectroTest/Property.pm
+lib/Test/LectroTest/RegressionTesting.pod
 lib/Test/LectroTest/TestRunner.pm
 lib/Test/LectroTest/Tutorial.pod
 t/lib/CaptureOutput.pm
+t/0-signature.t
 t/compat.t
 t/docs-eg.t
 t/gens.t
@@ -21,4 +25,6 @@ t/pod-coverage.t
 t/pod.t
 t/props.t
 t/props2.t
+t/recorder.t
 t/runner.t
+SIGNATURE    Added here by Module::Build

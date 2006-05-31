@@ -10,7 +10,7 @@ use constant NO_FILTER => 'NO_FILTER';
 
 =head1 NAME
 
-Test::LectroTest::Property - Specifications of properties that your software must hold
+Test::LectroTest::Property - Properties that make testable claims about your software
 
 =head1 SYNOPSIS
 

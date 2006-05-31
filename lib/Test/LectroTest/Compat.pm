@@ -75,6 +75,33 @@ L<Test::LectroTest::TestRunner> for the complete list of
 options.)
 
 
+=head1 TESTING FOR REGRESSIONS AND CORNER CASES
+
+LectroTest can record failure-causing test cases to a file, and it can
+play those test cases back as part of its normal testing strategy.
+The easiest way to take advantage of this feature is to set the
+I<regressions> parameter when you C<use> this module:
+
+    use Test::LectroTest::Compat
+        regressions => "regressions.txt";
+
+This tells LectroTest to use the file "regressions.txt" for both
+recording and playing back failures.  If you want to record and
+play back from separate files, or want only to record I<or> play
+back, use the I<record_failures> and/or
+I<playback_failures> options:
+
+    use Test::LectroTest::Compat
+        playback_failures => "regression_suite_for_my_module.txt",
+        record_failures   => "failures_in_the_field.txt";
+
+See L<Test::LectroTest::RegressionTesting> for more.
+
+*NOTE:*  If you pass any of the recording or playback parameters
+to Test::LectroTest::Compat, you must have version 0.3500 or
+greater of LectroTest installed.  Module authors, update your
+modules' build dependencies accordingly.
+
 
 =cut
 
@@ -85,7 +112,7 @@ sub import {
     my $caller = caller;
     { no strict 'refs';  *{$caller.'::holds'} = \&holds; }
     $Test->exported_to($caller);
-    $Test->plan(@_);
+    $Test->plan(_filter_recorder_opts(@_));
     Test::LectroTest::Property->export_to_level(1, $self);
     Test::LectroTest::Generator->export_to_level(1, $self, ':all');
     filter_add(Test::LectroTest::Property->_make_code_filter);
@@ -104,14 +131,60 @@ sub holds {
     return $success ? 1 : 0;    # same result policy as Test::Builder::ok
 }
 
+my ($playback_failures, $record_failures);
+
 sub _check_property {
     no warnings 'redefine';
     my $diag_store = [];
     my $property = shift;
     local *Test::Builder::ok   = \&_disconnected_ok;
     local *Test::Builder::diag = sub { shift; push @$diag_store, @_; 0 };
-    return ( $diag_store, 
-             Test::LectroTest::TestRunner->new(@_)->run($property) );
+
+    # for efficiency, we recycle any recorders that the TestRunner
+    # may have created (the recorders cache test cases)
+
+    my @opts = (
+        $playback_failures ? (playback_failures => $playback_failures) : (),
+        $record_failures ? (record_failures => $record_failures) : (),
+        @_  # passed-in options go last to override defaults
+    );
+    my $runner = Test::LectroTest::TestRunner->new(@opts);
+    my @results = ($diag_store, $runner->run($property));
+
+    # the TestRunner may have converted file names into TestRecorder
+    # objects, so we just "upgrade" to these objects if they exist
+    # and we're still holding filenames
+
+    $playback_failures = $runner->playback_failures
+        if $playback_failures && !ref($playback_failures);
+    $record_failures = $runner->record_failures
+        if $record_failures && !ref($record_failures);
+
+    return @results;
+}
+
+my @RECORDER_OPTS = (qw( record_failures playback_failures regressions ));
+
+sub _filter_recorder_opts {
+    my (@opts);
+    while (@_) {
+        unless (grep $_ eq $_[0], @RECORDER_OPTS) {
+            push @opts, shift;
+        }
+        else {
+            my ($ropt, $rval) = (shift, shift);
+            if ($ropt eq "regressions") {
+                $playback_failures = $record_failures = $rval;
+            }
+            elsif ($ropt eq "playback_failures") {
+                $playback_failures = $rval;
+            }
+            else {
+                $record_failures = $rval;
+            }
+        }
+    }
+    return @opts;
 }
 
 # the following sub replaces Test::Builder's
@@ -138,6 +211,9 @@ For a gentle introduction to LectroTest, see
 L<Test::LectroTest::Tutorial>.  Also, the slides from my LectroTest
 talk for the Pittsburgh Perl Mongers make for a great introduction.
 Download a copy from the LectroTest home (see below).
+
+L<Test::LectroTest::RegressionTesting> explains how to test for
+regressions and corner cases using LectroTest.
 
 L<Test::LectroTest::Property> explains in detail what
 you can put inside of your property specifications.

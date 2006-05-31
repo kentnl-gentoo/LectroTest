@@ -1,6 +1,6 @@
 ---
 name: Test-LectroTest
-version: 0.3400
+version: 0.3500
 author:
   - Tom Moertel (tom@moertel.com)
 abstract: 'Easy, automatic, specification-based tests'
@@ -17,9 +17,11 @@ build_requires:
 provides:
   Test::LectroTest:
     file: lib/Test/LectroTest.pm
-    version: 0.3400
+    version: 0.3500
   Test::LectroTest::Compat:
     file: lib/Test/LectroTest/Compat.pm
+  Test::LectroTest::FailureRecorder:
+    file: lib/Test/LectroTest/FailureRecorder.pm
   Test::LectroTest::Generator:
     file: lib/Test/LectroTest/Generator.pm
     version: 0.14
@@ -31,4 +33,4 @@ provides:
     file: lib/Test/LectroTest/TestRunner.pm
   Test::LectroTest::TestRunner::testcontroller:
     file: lib/Test/LectroTest/TestRunner.pm
-generated_by: Module::Build version 0.261
+generated_by: Module::Build version 0.2612
