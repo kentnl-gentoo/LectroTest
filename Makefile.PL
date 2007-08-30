@@ -5,6 +5,7 @@ WriteMakefile
           'PL_FILES' => {},
           'INSTALLDIRS' => 'site',
           'NAME' => 'Test::LectroTest',
+          'EXE_FILES' => [],
           'VERSION_FROM' => 'lib/Test/LectroTest.pm',
           'PREREQ_PM' => {
                            'Test::More' => 0,

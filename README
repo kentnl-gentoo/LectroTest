@@ -23,7 +23,7 @@ DESCRIPTION
     software. LectroTest then checks your software to see whether those
     properties hold.
 
-    Declare properties using the "Property" function, which takes a block of
+    Declare properties using the `Property' function, which takes a block of
     code and promotes it to a Test::LectroTest::Property:
 
         Property {
@@ -48,13 +48,13 @@ DESCRIPTION
 
             MyModule::my_function( $x, $y ) >= 0;
 
-    In this case, it asserts that "MyModule::my_function($x,$y)" returns a
-    non-negative result. (Yes, $x and $y refer to the same *x* and *y* that
-    we bound to the generators earlier. LectroTest automagically loads these
-    lexically bound Perl variables with values behind the scenes.)
+    In this case, it asserts that `MyModule::my_function($x,$y)' returns a
+    non-negative result. (Yes, `$x' and `$y' refer to the same *x* and *y*
+    that we bound to the generators earlier. LectroTest automagically loads
+    these lexically bound Perl variables with values behind the scenes.)
 
-    Note: If you want to use testing assertions like "ok" from Test::Simple
-    or "is", "like", or "cmp_ok" from Test::More (and the related family of
+    Note: If you want to use testing assertions like `ok' from Test::Simple
+    or `is', `like', or `cmp_ok' from Test::More (and the related family of
     Test::Builder-based testing modules), see Test::LectroTest::Compat,
     which lets you mix and match LectroTest with these modules.
 
@@ -73,7 +73,7 @@ DESCRIPTION
     output is non-negative."
 
     To check whether this property holds, simply put it in a Perl program
-    that uses the Test::LectroTest module. (See the "SYNOPSIS" for an
+    that uses the Test::LectroTest module. (See the SYNOPSIS for an
     example.) When you run the program, LectroTest will load the property
     (and any others in the file) and check it by running random trials
     against the software you're testing.
@@ -112,7 +112,7 @@ ADJUSTING THE TESTING PARAMETERS
     There is one testing parameter (among others) that you might wish to
     change from time to time: the number of trials to run for each property
     checked. By default it is 1,000. If you want to try more or fewer
-    trials, pass the "trials=>"*N* flag:
+    trials, pass the `trials=>'*N* flag:
 
       use Test::LectroTest trials => 10_000;
 
@@ -120,7 +120,7 @@ TESTING FOR REGRESSIONS AND CORNER CASES
     LectroTest can record failure-causing test cases to a file, and it can
     play those test cases back as part of its normal testing strategy. The
     easiest way to take advantage of this feature is to set the
-    *regressions* parameter when you "use" this module:
+    *regressions* parameter when you `use' this module:
 
         use Test::LectroTest
             regressions => "regressions.txt";

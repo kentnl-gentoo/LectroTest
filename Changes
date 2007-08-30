@@ -4,6 +4,17 @@ LectroTest Change Log
 Tom Moertel (tom@moertel.com)
 
 
+* 0.3600   (2007-08-30)
+
+** Misc
+
+- Test suite for generators now emits notice that a failure may
+  not indicate a real problem.  (rt.cpan.org #28203)
+
+- Minor typo fixes in the documentation.
+
+
+
 * 0.3500   (2006-05-31)
 
 ** Improvements
@@ -20,7 +31,7 @@ Tom Moertel (tom@moertel.com)
   The first tells LT to use the prerecorded failures in the given file
   for playback during testing, *in addition to* the normal randomly
   generated cases.  The second tells LT to record any failures that
-  occur during testing.  The failues will be written to the given
+  occur during testing.  The failures will be written to the given
   file.  The third is a shorthand for setting the first two options to
   the same file.  It is a more readable way to declare your intent to
   build up and use a persistent regressions file.
