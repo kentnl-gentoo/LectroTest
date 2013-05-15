@@ -1,12 +1,14 @@
 package Test::LectroTest::TestRunner;
+{
+  $Test::LectroTest::TestRunner::VERSION = '0.5000';
+}
 
 use strict;
 use warnings;
 
-use UNIVERSAL qw( isa );
-
 use Carp;
 use Data::Dumper;
+use Scalar::Util qw(blessed);
 
 use Test::LectroTest::Property qw( NO_FILTER );
 use Test::LectroTest::FailureRecorder;
@@ -15,6 +17,10 @@ use Test::LectroTest::Generator qw( Unit );
 =head1 NAME
 
 Test::LectroTest::TestRunner - Configurable TAP-compatible engine for running LectroTest property checks
+
+=head1 VERSION
+
+version 0.5000
 
 =head1 SYNOPSIS
 
@@ -399,7 +405,7 @@ parameter after all of the properties in the argument list:
 
 =cut
 
-sub _prop($) { isa $_[0], "Test::LectroTest::Property" }
+sub _prop($) { blessed $_[0] && $_[0]->isa("Test::LectroTest::Property") }
 
 sub run_suite {
     local $| = 1;
@@ -550,6 +556,9 @@ found.
 =cut
 
 package Test::LectroTest::TestRunner::results;
+{
+  $Test::LectroTest::TestRunner::results::VERSION = '0.5000';
+}
 use Class::Struct;
 import Data::Dumper;
 
@@ -636,6 +645,9 @@ The following methods are available.
 =cut
 
 package Test::LectroTest::TestRunner::testcontroller;
+{
+  $Test::LectroTest::TestRunner::testcontroller::VERSION = '0.5000';
+}
 import Class::Struct;
 
 struct ( labels => '$', retried => '$', notes => '$' );
@@ -825,15 +837,6 @@ Perl's simple text-based interface between testing modules such
 as L<Test::LectroTest> and the test harness L<Test::Harness>.
 
 
-=head1 LECTROTEST HOME
-
-The LectroTest home is
-http://community.moertel.com/LectroTest.
-There you will find more documentation, presentations, mailing-list archives, a wiki,
-and other helpful LectroTest-related resources.  It's also the
-best place to ask questions.
-
-
 =head1 AUTHOR
 
 Tom Moertel (tom@moertel.com)
@@ -848,7 +851,7 @@ http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright (c) 2004-06 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004-13 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

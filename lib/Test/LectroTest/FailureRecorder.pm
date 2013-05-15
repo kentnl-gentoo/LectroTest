@@ -1,4 +1,7 @@
 package Test::LectroTest::FailureRecorder;
+{
+  $Test::LectroTest::FailureRecorder::VERSION = '0.5000';
+}
 
 use strict;
 use warnings;
@@ -9,6 +12,10 @@ use Data::Dumper;
 =head1 NAME
 
 Test::LectroTest::FailureRecorder - Records/plays failures for regression testing
+
+=head1 VERSION
+
+version 0.5000
 
 =head1 SYNOPSIS
 
@@ -185,21 +192,13 @@ L<Test::LectroTest::TestRunner> explains the internal testing apparatus,
 which uses the failure recorders to record and play back failures for
 regression testing.
 
-=head1 LECTROTEST HOME
-
-The LectroTest home is
-http://community.moertel.com/LectroTest.
-There you will find more documentation, presentations, mailing-list archives, a wiki,
-and other helpful LectroTest-related resources.  It's also the
-best place to ask questions.
-
 =head1 AUTHOR
 
 Tom Moertel (tom@moertel.com)
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright (c) 2004-06 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004-13 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

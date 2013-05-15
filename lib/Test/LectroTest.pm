@@ -1,4 +1,7 @@
 package Test::LectroTest;
+{
+  $Test::LectroTest::VERSION = '0.5000';
+}
 
 use warnings;
 use strict;
@@ -8,11 +11,13 @@ use Filter::Util::Call;
 require Test::LectroTest::Property;
 require Test::LectroTest::Generator;
 
-our $VERSION = "0.3600";
-
-=head1 NAME 
+=head1 NAME
 
 Test::LectroTest - Easy, automatic, specification-based tests
+
+=head1 VERSION
+
+version 0.5000
 
 =head1 SYNOPSIS
 
@@ -237,7 +242,7 @@ procedure.
 
 =head1 LECTROTEST HOME
 
-The LectroTest home is 
+The LectroTest home is
 http://community.moertel.com/LectroTest.
 There you will find more documentation, presentations, mailing-list archives, a wiki,
 and other helpful LectroTest-related resources.  It's also the

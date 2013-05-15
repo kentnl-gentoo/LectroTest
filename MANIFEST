@@ -1,12 +1,15 @@
-Build.PL
 Changes
-MANIFEST			This list of files
+LICENSE
+MANIFEST
 MANIFEST.SKIP
 META.yml
 Makefile.PL
 README
 THANKS
 TODO
+buildrpm
+checkpods
+dist.ini
 lib/Test/LectroTest.pm
 lib/Test/LectroTest/Compat.pm
 lib/Test/LectroTest/FailureRecorder.pm
@@ -15,16 +18,18 @@ lib/Test/LectroTest/Property.pm
 lib/Test/LectroTest/RegressionTesting.pod
 lib/Test/LectroTest/TestRunner.pm
 lib/Test/LectroTest/Tutorial.pod
-t/lib/CaptureOutput.pm
-t/0-signature.t
+posts/perlmonks/testing-tutorial.html
 t/compat.t
 t/docs-eg.t
 t/gens.t
 t/harness.t
+t/lib/CaptureOutput.pm
 t/pod-coverage.t
 t/pod.t
 t/props.t
 t/props2.t
 t/recorder.t
+t/release-pod-coverage.t
+t/release-pod-syntax.t
 t/runner.t
-SIGNATURE    Added here by Module::Build
+tex/titlepage.ltx

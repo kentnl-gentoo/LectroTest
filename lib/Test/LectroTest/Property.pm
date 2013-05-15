@@ -1,4 +1,7 @@
 package Test::LectroTest::Property;
+{
+  $Test::LectroTest::Property::VERSION = '0.5000';
+}
 
 use strict;
 use warnings;
@@ -11,6 +14,10 @@ use constant NO_FILTER => 'NO_FILTER';
 =head1 NAME
 
 Test::LectroTest::Property - Properties that make testable claims about your software
+
+=head1 VERSION
+
+version 0.5000
 
 =head1 SYNOPSIS
 
@@ -98,7 +105,7 @@ sub Property(&&@) {
         inputs => $genspec_fn->(),
         test   => $test_fn,
         @args
-    );                            
+    );
 }
 
 =pod
@@ -292,7 +299,7 @@ Inside the behavior test, you have access to a special variable
 C<$tcon> that allows you to interact with the test controller.
 Through C<$tcon> you can do the following:
 
-=over 4 
+=over 4
 
 =item *
 
@@ -387,7 +394,7 @@ sub _make_code_filter {
                 # opening of multi-line decl
                 $content .= " $1";
             }
-            elsif ($content && 
+            elsif ($content &&
                    s| ^(.*?)\#*\s*\]\#\# |
                       _binding($1)."]]}"._body("$content$1") |exs) {
                 # close of multi-line decl
@@ -442,14 +449,6 @@ the syntax, you can disable the filter like so:
 
     use Test::LectroTest::Property qw( NO_FILTER );
 
-=head1 LECTROTEST HOME
-
-The LectroTest home is 
-http://community.moertel.com/LectroTest.
-There you will find more documentation, presentations, mailing-list archives, a wiki,
-and other helpful LectroTest-related resources.  It's also the
-best place to ask questions.
-
 =head1 AUTHOR
 
 Tom Moertel (tom@moertel.com)
@@ -462,7 +461,7 @@ http://www.cs.chalmers.se/~rjmh/QuickCheck/.
 
 =head1 COPYRIGHT and LICENSE
 
-Copyright (c) 2004-05 by Thomas G Moertel.  All rights reserved.
+Copyright (c) 2004-13 by Thomas G Moertel.  All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

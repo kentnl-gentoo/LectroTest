@@ -19,6 +19,19 @@
 - Steffen Müller for good ideas about testing corner cases, which
   became the basis for LectroTests's failure recording and playback
   capabilities
-  
+
+- Andreas Koenig (ANDK) for suggesting that I modify the test
+  suite for generators (t/gens.t) to emit a notice that test
+  failures do not necessarily indicate a failure.
+
+- Petr Pisar for reporting a missing prototype
+  https://rt.cpan.org/Ticket/Display.html?id=85281
+
+- Nicholas Bamber (SILASMONK) for patch to remove UNIVERSAL->import
+  https://rt.cpan.org/Public/Bug/Display.html?id=66114
+
+- Ricardo SIGNES for the thunderously time-saving Dist::Zilla
+
+
 --
 Tom Moertel <tom@moertel.com>
