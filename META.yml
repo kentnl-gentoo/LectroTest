@@ -26,4 +26,4 @@ requires:
   constant: 0
   strict: 0
   warnings: 0
-version: 0.5000
+version: 0.5001

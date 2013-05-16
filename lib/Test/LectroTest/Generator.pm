@@ -1,6 +1,6 @@
 package Test::LectroTest::Generator;
 {
-  $Test::LectroTest::Generator::VERSION = '0.5000';
+  $Test::LectroTest::Generator::VERSION = '0.5001';
 }
 
 use strict;
@@ -35,7 +35,7 @@ Test::LectroTest::Generator - Random value generators and combinators
 
 =head1 VERSION
 
-version 0.5000
+version 0.5001
 
 =head1 SYNOPSIS
 

@@ -1,6 +1,6 @@
 package Test::LectroTest::FailureRecorder;
 {
-  $Test::LectroTest::FailureRecorder::VERSION = '0.5000';
+  $Test::LectroTest::FailureRecorder::VERSION = '0.5001';
 }
 
 use strict;
@@ -15,7 +15,7 @@ Test::LectroTest::FailureRecorder - Records/plays failures for regression testin
 
 =head1 VERSION
 
-version 0.5000
+version 0.5001
 
 =head1 SYNOPSIS
 

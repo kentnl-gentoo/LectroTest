@@ -1,6 +1,6 @@
 package Test::LectroTest::TestRunner;
 {
-  $Test::LectroTest::TestRunner::VERSION = '0.5000';
+  $Test::LectroTest::TestRunner::VERSION = '0.5001';
 }
 
 use strict;
@@ -20,7 +20,7 @@ Test::LectroTest::TestRunner - Configurable TAP-compatible engine for running Le
 
 =head1 VERSION
 
-version 0.5000
+version 0.5001
 
 =head1 SYNOPSIS
 
@@ -557,7 +557,7 @@ found.
 
 package Test::LectroTest::TestRunner::results;
 {
-  $Test::LectroTest::TestRunner::results::VERSION = '0.5000';
+  $Test::LectroTest::TestRunner::results::VERSION = '0.5001';
 }
 use Class::Struct;
 import Data::Dumper;
@@ -646,7 +646,7 @@ The following methods are available.
 
 package Test::LectroTest::TestRunner::testcontroller;
 {
-  $Test::LectroTest::TestRunner::testcontroller::VERSION = '0.5000';
+  $Test::LectroTest::TestRunner::testcontroller::VERSION = '0.5001';
 }
 import Class::Struct;
 

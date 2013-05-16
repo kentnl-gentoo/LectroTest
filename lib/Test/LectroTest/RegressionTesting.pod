@@ -4,7 +4,7 @@ Test::LectroTest::RegressionTesting - How to do regression testing (for free!)
 
 =head1 VERSION
 
-version 0.5000
+version 0.5001
 
 =head1 SYNOPSIS
 

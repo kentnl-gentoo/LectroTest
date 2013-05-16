@@ -1,6 +1,6 @@
 package Test::LectroTest::Compat;
 {
-  $Test::LectroTest::Compat::VERSION = '0.5000';
+  $Test::LectroTest::Compat::VERSION = '0.5001';
 }
 
 use warnings;
@@ -18,7 +18,7 @@ Test::LectroTest::Compat - Use LectroTest property checks in a Test::Simple worl
 
 =head1 VERSION
 
-version 0.5000
+version 0.5001
 
 =head1 SYNOPSIS
 

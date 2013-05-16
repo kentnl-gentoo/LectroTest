@@ -1,6 +1,6 @@
 package Test::LectroTest::Property;
 {
-  $Test::LectroTest::Property::VERSION = '0.5000';
+  $Test::LectroTest::Property::VERSION = '0.5001';
 }
 
 use strict;
@@ -17,7 +17,7 @@ Test::LectroTest::Property - Properties that make testable claims about your sof
 
 =head1 VERSION
 
-version 0.5000
+version 0.5001
 
 =head1 SYNOPSIS
 

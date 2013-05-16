@@ -1,6 +1,6 @@
 package Test::LectroTest;
 {
-  $Test::LectroTest::VERSION = '0.5000';
+  $Test::LectroTest::VERSION = '0.5001';
 }
 
 use warnings;
@@ -17,7 +17,7 @@ Test::LectroTest - Easy, automatic, specification-based tests
 
 =head1 VERSION
 
-version 0.5000
+version 0.5001
 
 =head1 SYNOPSIS
 
